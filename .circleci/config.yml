@@ -8,10 +8,10 @@ jobs:
       # specify the version
       - image: circleci/golang:1.10
             
-    working_directory: /go/src/github.com/danesparza/authserver
+    working_directory: /go/src/github.com/danesparza/iamserver
     steps:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: go get --tags purego -v -t -d ./...
-      - run: go test --tags purego -v -race ./... 
+      - run: go get -v -t -d ./...
+      - run: go test -v -race ./... 
