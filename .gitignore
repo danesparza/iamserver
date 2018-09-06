@@ -10,3 +10,12 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Ignore any config files
+iamserver.yml
+
+# Ignore certs:
+*.pem
+
+# Ignore system/token database files:
+db/*
