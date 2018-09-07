@@ -61,7 +61,7 @@ func TestRoot_GetKey_ReturnsCorrectKey(t *testing.T) {
 	actualKey := db.GetKey("User", userId, "name")
 
 	//	Assert
-	if expectedKey != actualKey {
+	if expectedKey != string(actualKey) {
 		t.Errorf("GetKey failed:  Expected %s but got %s instead", expectedKey, actualKey)
 	}
 }

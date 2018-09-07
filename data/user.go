@@ -57,7 +57,7 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 
 	//	Save it to the database:
 	err = db.Update(func(txn *badger.Txn) error {
-		err := txn.Set([]byte(user.Name), encoded)
+		err := txn.Set(store.GetKey("User", user.Name), encoded)
 		return err
 	})
 
@@ -89,7 +89,7 @@ func (store Manager) GetUser(context User, userName string) (User, error) {
 	defer db.Close()
 
 	err = db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get([]byte(userName))
+		item, err := txn.Get(store.GetKey("User", userName))
 		if err != nil {
 			return err
 		}
@@ -111,6 +111,70 @@ func (store Manager) GetUser(context User, userName string) (User, error) {
 	//	If there was an error, report it:
 	if err != nil {
 		return retval, fmt.Errorf("Problem getting the data: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+}
+
+// GetAllUsers gets all users in the system
+func (store Manager) GetAllUsers(context User) ([]User, error) {
+	//	Our return item
+	retval := []User{}
+
+	//	Open the systemDB
+	opts := badger.DefaultOptions
+	opts.Dir = store.SystemDBpath
+	opts.ValueDir = store.SystemDBpath
+	db, err := badger.Open(opts)
+	if err != nil {
+		return retval, fmt.Errorf("Problem opening the systemDB: %s", err)
+	}
+	defer db.Close()
+
+	err = db.View(func(txn *badger.Txn) error {
+
+		//	Get an iterator
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		//	Set our prefix
+		prefix := store.GetKey("User")
+
+		//	Iterate over our values:
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+
+			//	Get the item
+			item := it.Item()
+
+			//	Get the item key
+			// k := item.Key()
+
+			//	Get the item value
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				//	Create our item:
+				item := User{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &item); err != nil {
+					return err
+				}
+
+				//	Add to the array of returned users:
+				retval = append(retval, item)
+			}
+		}
+		return nil
+	})
+
+	//	If there was an error, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem getting the list of items: %s", err)
 	}
 
 	//	Return our data:

@@ -11,9 +11,9 @@ type Manager struct {
 }
 
 // GetKey returns a key to be used in the storage system
-func (store Manager) GetKey(entityType string, keyPart ...string) string {
+func (store Manager) GetKey(entityType string, keyPart ...string) []byte {
 	allparts := []string{}
 	allparts = append(allparts, entityType)
 	allparts = append(allparts, keyPart...)
-	return strings.Join(allparts, "_")
+	return []byte(strings.Join(allparts, "_"))
 }
