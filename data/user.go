@@ -32,18 +32,8 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 	//	Our return item
 	retval := User{}
 
-	//	Open the systemDB
-	opts := badger.DefaultOptions
-	opts.Dir = store.SystemDBpath
-	opts.ValueDir = store.SystemDBpath
-	db, err := badger.Open(opts)
-	if err != nil {
-		return retval, fmt.Errorf("Problem opening the systemDB: %s", err)
-	}
-	defer db.Close()
-
 	//	First -- does the user exist already?
-	err = db.View(func(txn *badger.Txn) error {
+	err := store.systemdb.View(func(txn *badger.Txn) error {
 		_, err := txn.Get(GetKey("User", user.Name))
 		return err
 	})
@@ -66,7 +56,7 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 	}
 
 	//	Save it to the database:
-	err = db.Update(func(txn *badger.Txn) error {
+	err = store.systemdb.Update(func(txn *badger.Txn) error {
 		err := txn.Set(GetKey("User", user.Name), encoded)
 		return err
 	})
@@ -88,17 +78,7 @@ func (store Manager) GetUser(context User, userName string) (User, error) {
 	//	Our return item
 	retval := User{}
 
-	//	Open the systemDB
-	opts := badger.DefaultOptions
-	opts.Dir = store.SystemDBpath
-	opts.ValueDir = store.SystemDBpath
-	db, err := badger.Open(opts)
-	if err != nil {
-		return retval, fmt.Errorf("Problem opening the systemDB: %s", err)
-	}
-	defer db.Close()
-
-	err = db.View(func(txn *badger.Txn) error {
+	err := store.systemdb.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(GetKey("User", userName))
 		if err != nil {
 			return err
@@ -132,17 +112,7 @@ func (store Manager) GetAllUsers(context User) ([]User, error) {
 	//	Our return item
 	retval := []User{}
 
-	//	Open the systemDB
-	opts := badger.DefaultOptions
-	opts.Dir = store.SystemDBpath
-	opts.ValueDir = store.SystemDBpath
-	db, err := badger.Open(opts)
-	if err != nil {
-		return retval, fmt.Errorf("Problem opening the systemDB: %s", err)
-	}
-	defer db.Close()
-
-	err = db.View(func(txn *badger.Txn) error {
+	err := store.systemdb.View(func(txn *badger.Txn) error {
 
 		//	Get an iterator
 		it := txn.NewIterator(badger.DefaultIteratorOptions)

@@ -11,9 +11,14 @@ func TestUser_AddUser_ValidUser_Successful(t *testing.T) {
 
 	//	Arrange
 	systemdb, tokendb := getTestFiles()
-	db := data.Manager{SystemDBpath: systemdb, TokenDBpath: tokendb}
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
 	defer func() {
+		db.Close()
 		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
 	}()
 
 	contextUser := data.User{Name: "System"}
@@ -21,7 +26,7 @@ func TestUser_AddUser_ValidUser_Successful(t *testing.T) {
 	testPassword := "testpass"
 
 	//	Act
-	_, err := db.AddUser(contextUser, testUser, testPassword)
+	_, err = db.AddUser(contextUser, testUser, testPassword)
 
 	//	Assert
 	if err != nil {
@@ -34,9 +39,14 @@ func TestUser_AddUser_AlreadyExists_ReturnsError(t *testing.T) {
 
 	//	Arrange
 	systemdb, tokendb := getTestFiles()
-	db := data.Manager{SystemDBpath: systemdb, TokenDBpath: tokendb}
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
 	defer func() {
+		db.Close()
 		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
 	}()
 
 	contextUser := data.User{Name: "System"}
@@ -44,7 +54,7 @@ func TestUser_AddUser_AlreadyExists_ReturnsError(t *testing.T) {
 	testPassword := "testpass"
 
 	//	Act
-	_, err := db.AddUser(contextUser, testUser, testPassword)
+	_, err = db.AddUser(contextUser, testUser, testPassword)
 	if err != nil {
 		t.Errorf("AddUser - Should add user without error, but got: %s", err)
 	}
@@ -61,16 +71,21 @@ func TestUser_GetUser_UserDoesntExist_ReturnsError(t *testing.T) {
 
 	//	Arrange
 	systemdb, tokendb := getTestFiles()
-	db := data.Manager{SystemDBpath: systemdb, TokenDBpath: tokendb}
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
 	defer func() {
+		db.Close()
 		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
 	}()
 
 	contextUser := data.User{Name: "System"}
 	testUser := "UnitTest1"
 
 	//	Act
-	_, err := db.GetUser(contextUser, testUser)
+	_, err = db.GetUser(contextUser, testUser)
 
 	//	Assert
 	if err == nil {
@@ -83,9 +98,14 @@ func TestUser_GetUser_UserExists_ReturnsUser(t *testing.T) {
 
 	//	Arrange
 	systemdb, tokendb := getTestFiles()
-	db := data.Manager{SystemDBpath: systemdb, TokenDBpath: tokendb}
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
 	defer func() {
+		db.Close()
 		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
 	}()
 
 	contextUser := data.User{Name: "System"}
@@ -121,9 +141,14 @@ func TestUser_GetAllUsers_UserExists_ReturnsAllUsers(t *testing.T) {
 
 	//	Arrange
 	systemdb, tokendb := getTestFiles()
-	db := data.Manager{SystemDBpath: systemdb, TokenDBpath: tokendb}
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
 	defer func() {
+		db.Close()
 		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
 	}()
 
 	contextUser := data.User{Name: "System"}
