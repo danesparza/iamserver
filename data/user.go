@@ -56,7 +56,7 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 
 	//	Save it to the database:
 	err = db.Update(func(txn *badger.Txn) error {
-		err := txn.Set(store.GetKey("User", user.Name), encoded)
+		err := txn.Set(GetKey("User", user.Name), encoded)
 		return err
 	})
 
@@ -88,7 +88,7 @@ func (store Manager) GetUser(context User, userName string) (User, error) {
 	defer db.Close()
 
 	err = db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(store.GetKey("User", userName))
+		item, err := txn.Get(GetKey("User", userName))
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ func (store Manager) GetAllUsers(context User) ([]User, error) {
 		defer it.Close()
 
 		//	Set our prefix
-		prefix := store.GetKey("User")
+		prefix := GetKey("User")
 
 		//	Iterate over our values:
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {

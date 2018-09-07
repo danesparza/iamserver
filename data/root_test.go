@@ -57,8 +57,7 @@ func TestRoot_GetKey_ReturnsCorrectKey(t *testing.T) {
 	expectedKey := "User_unitestuser1_name"
 
 	//	Act
-	db := data.Manager{}
-	actualKey := db.GetKey("User", userId, "name")
+	actualKey := data.GetKey("User", userId, "name")
 
 	//	Assert
 	if expectedKey != string(actualKey) {
