@@ -15,9 +15,8 @@ import (
 // They can be created/updated/deleted.  If they are deleted, eventually
 // they will be removed from the system.  The admin user can only be disabled, not deleted
 type User struct {
-	ID          string      `json:"id"`
-	Enabled     bool        `json:"enabled"`
 	Name        string      `json:"name"`
+	Enabled     bool        `json:"enabled"`
 	Description string      `json:"description"`
 	SecretHash  string      `json:"secrethash"`
 	Created     time.Time   `json:"created"`
