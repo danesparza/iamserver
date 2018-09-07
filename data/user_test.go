@@ -30,6 +30,33 @@ func TestUser_AddUser_ValidUser_Successful(t *testing.T) {
 
 }
 
+func TestUser_AddUser_AlreadyExists_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db := data.Manager{SystemDBpath: systemdb, TokenDBpath: tokendb}
+	defer func() {
+		os.RemoveAll(systemdb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+	testUser := data.User{Name: "UnitTest1"}
+	testPassword := "testpass"
+
+	//	Act
+	_, err := db.AddUser(contextUser, testUser, testPassword)
+	if err != nil {
+		t.Errorf("AddUser - Should add user without error, but got: %s", err)
+	}
+	_, err = db.AddUser(contextUser, testUser, testPassword)
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AddUser - Should not add duplicate user without error")
+	}
+
+}
+
 func TestUser_GetUser_UserDoesntExist_ReturnsError(t *testing.T) {
 
 	//	Arrange

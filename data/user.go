@@ -42,6 +42,17 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 	}
 	defer db.Close()
 
+	//	First -- does the user exist already?
+	err = db.View(func(txn *badger.Txn) error {
+		_, err := txn.Get(GetKey("User", user.Name))
+		return err
+	})
+
+	//	If we didn't get an error, we have a problem:
+	if err == nil {
+		return retval, fmt.Errorf("User already exists")
+	}
+
 	//	Update the created / updated fields:
 	user.Created = time.Now()
 	user.Updated = time.Now()
