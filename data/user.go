@@ -25,6 +25,7 @@ type User struct {
 	UpdatedBy   string      `json:"updated_by"`
 	Deleted     zero.Time   `json:"deleted"`
 	DeletedBy   null.String `json:"deleted_by"`
+	Groups      []string    `json:"groups"`
 }
 
 // AddUser adds a user to the system
