@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dgraph-io/badger"
+	"github.com/danesparza/badger"
 )
 
 // Manager is the data manager

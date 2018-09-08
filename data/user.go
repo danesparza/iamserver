@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgraph-io/badger"
+	"github.com/danesparza/badger"
 	null "gopkg.in/guregu/null.v3"
 	"gopkg.in/guregu/null.v3/zero"
 )
