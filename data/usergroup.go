@@ -24,9 +24,19 @@ type Group struct {
 }
 
 // AddGroup adds a user to the system
-func (store Manager) AddGroup(context User, group Group) (Group, error) {
+func (store Manager) AddGroup(context User, groupName string, groupDescription string) (Group, error) {
 	//	Our return item
 	retval := Group{}
+
+	//	Our new group:
+	group := Group{
+		Name:        groupName,
+		Description: groupDescription,
+		Created:     time.Now(),
+		CreatedBy:   context.Name,
+		Updated:     time.Now(),
+		UpdatedBy:   context.Name,
+	}
 
 	//	First -- does the group exist already?
 	err := store.systemdb.View(func(txn *badger.Txn) error {
@@ -38,12 +48,6 @@ func (store Manager) AddGroup(context User, group Group) (Group, error) {
 	if err == nil {
 		return retval, fmt.Errorf("Group already exists")
 	}
-
-	//	Update the created / updated fields:
-	group.Created = time.Now()
-	group.Updated = time.Now()
-	group.CreatedBy = context.Name
-	group.UpdatedBy = context.Name
 
 	//	Serialize to JSON format
 	encoded, err := json.Marshal(group)
@@ -151,6 +155,77 @@ func (store Manager) GetAllGroups(context User) ([]Group, error) {
 	//	If there was an error, report it:
 	if err != nil {
 		return retval, fmt.Errorf("Problem getting the list of items: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+}
+
+// AddUsersToGroup adds a user to the system
+func (store Manager) AddUsersToGroup(context User, groupName string, users ...string) (Group, error) {
+	//	Our return item
+	retval := Group{}
+
+	//	First -- validate that the group exists
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("Group", groupName))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return err
+			}
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return retval, fmt.Errorf("Group does not exist")
+	}
+
+	//	Next -- validate that each of the users exist:
+	for index := 0; index <= len(users); index++ {
+
+		currentuser := users[index]
+
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+			_, err := txn.Get(GetKey("User", currentuser))
+			return err
+		})
+
+		if err != nil {
+			return retval, fmt.Errorf("User %s doesn't exist", currentuser)
+		}
+	}
+
+	//	Then add each of users to both ...
+	//	the usergroup
+
+	//	and add the group to each user
+
+	//	Serialize to JSON format
+	encoded, err := json.Marshal(retval)
+	if err != nil {
+		return retval, fmt.Errorf("Problem serializing the data: %s", err)
+	}
+
+	//	Save it to the database:
+	err = store.systemdb.Update(func(txn *badger.Txn) error {
+		err := txn.Set(GetKey("Group", retval.Name), encoded)
+		return err
+	})
+
+	//	If there was an error saving the data, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem saving the data: %s", err)
 	}
 
 	//	Return our data:

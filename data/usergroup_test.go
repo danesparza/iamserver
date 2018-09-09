@@ -2,9 +2,11 @@ package data_test
 
 import (
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/danesparza/iamserver/data"
+	"github.com/xtgo/set"
 )
 
 func TestGroup_AddGroup_ValidGroup_Successful(t *testing.T) {
@@ -22,10 +24,9 @@ func TestGroup_AddGroup_ValidGroup_Successful(t *testing.T) {
 	}()
 
 	contextUser := data.User{Name: "System"}
-	testGroup := data.Group{Name: "UnitTest1"}
 
 	//	Act
-	response, err := db.AddGroup(contextUser, testGroup)
+	response, err := db.AddGroup(contextUser, "UnitTest1", "")
 
 	//	Assert
 	if err != nil {
@@ -53,14 +54,13 @@ func TestGroup_AddGroup_AlreadyExists_ReturnsError(t *testing.T) {
 	}()
 
 	contextUser := data.User{Name: "System"}
-	testGroup := data.Group{Name: "UnitTest1"}
 
 	//	Act
-	_, err = db.AddGroup(contextUser, testGroup)
+	_, err = db.AddGroup(contextUser, "UnitTest1", "")
 	if err != nil {
 		t.Errorf("AddGroup - Should execute without error, but got: %s", err)
 	}
-	_, err = db.AddGroup(contextUser, testGroup)
+	_, err = db.AddGroup(contextUser, "UnitTest1", "")
 
 	//	Assert
 	if err == nil {
@@ -111,21 +111,18 @@ func TestGroup_GetGroup_GroupExists_ReturnsGroup(t *testing.T) {
 	}()
 
 	contextUser := data.User{Name: "System"}
-	testGroup1 := data.Group{Name: "UnitTest1"}
-	testGroup2 := data.Group{Name: "UnitTest2"}
-
 	//	Act
-	ret1, err := db.AddGroup(contextUser, testGroup1)
+	ret1, err := db.AddGroup(contextUser, "UnitTest1", "")
 	if err != nil {
 		t.Fatalf("AddGroup - Should execute without error, but got: %s", err)
 	}
 
-	_, err = db.AddGroup(contextUser, testGroup2)
+	_, err = db.AddGroup(contextUser, "UnitTest2", "")
 	if err != nil {
 		t.Fatalf("AddGroup - Should execute without error, but got: %s", err)
 	}
 
-	got1, err := db.GetGroup(contextUser, testGroup1.Name)
+	got1, err := db.GetGroup(contextUser, "UnitTest1")
 
 	//	Assert
 	if err != nil {
@@ -133,7 +130,24 @@ func TestGroup_GetGroup_GroupExists_ReturnsGroup(t *testing.T) {
 	}
 
 	if ret1.Name != got1.Name {
-		t.Errorf("GetGroup - expected group %s, but got %s instead", testGroup1.Name, got1.Name)
+		t.Errorf("GetGroup - expected group %s, but got %s instead", "UnitTest1", got1.Name)
 	}
+
+}
+
+func TestUniq(t *testing.T) {
+
+	//	Our regular slice o' emails
+	emails := []string{"esparza.dan@gmail.com", "danesparza@cagedtornado.com", "cmesparza@gmail.com", "esparza.dan@gmail.com"}
+
+	//	Convert them into a sortable slice:
+	data := sort.StringSlice(emails)
+
+	sort.Sort(data)     // sort the data first
+	n := set.Uniq(data) // Uniq returns the size of the set
+	data = data[:n]     // trim the duplicate elements
+
+	//	 Well looky here ... we have a unique (sorted) set of emails
+	t.Logf("%+v", data)
 
 }
