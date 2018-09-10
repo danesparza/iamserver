@@ -198,10 +198,7 @@ func (store Manager) AddUsersToGroup(context User, groupName string, users ...st
 	//	Next:
 	//	- Validate that each of the users exist
 	//	- Track each user in 'affectedUsers'
-	for index := 0; index <= len(users); index++ {
-
-		currentuser := users[index]
-
+	for _, currentuser := range users {
 		err := store.systemdb.View(func(txn *badger.Txn) error {
 			item, err := txn.Get(GetKey("User", currentuser))
 
@@ -249,8 +246,6 @@ func (store Manager) AddUsersToGroup(context User, groupName string, users ...st
 	//	the usergroup
 	retval.Users = allUniqueGroupUsers
 
-	//	and add the group to each user
-
 	//	Serialize the group to JSON format
 	encoded, err := json.Marshal(retval)
 	if err != nil {
@@ -260,17 +255,40 @@ func (store Manager) AddUsersToGroup(context User, groupName string, users ...st
 	//	Save it to the database:
 	err = store.systemdb.Update(func(txn *badger.Txn) error {
 		err := txn.Set(GetKey("Group", retval.Name), encoded)
-		return err
+		if err != nil {
+			return err
+		}
+
+		//	Save each affected user to the database (as part of the same transaction):
+		for _, affectedUser := range affectedUsers {
+
+			//	and add the group to each user
+			currentGroups := append(affectedUser.Groups, groupName)
+			allUniqueCurrentGroups := sort.StringSlice(currentGroups)
+
+			sort.Sort(allUniqueCurrentGroups)                    // sort the data first
+			cn := set.Uniq(allUniqueCurrentGroups)               // Uniq returns the size of the set
+			allUniqueCurrentGroups = allUniqueCurrentGroups[:cn] // trim the duplicate elements
+			affectedUser.Groups = allUniqueCurrentGroups
+
+			encoded, err := json.Marshal(affectedUser)
+			if err != nil {
+				return err
+			}
+
+			err = txn.Set(GetKey("User", affectedUser.Name), encoded)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 
 	//	If there was an error saving the data, report it:
 	if err != nil {
-		return retval, fmt.Errorf("Problem saving the group: %s", err)
+		return retval, fmt.Errorf("Problem completing the group updates: %s", err)
 	}
-
-	//	Save each affected user to the database too:
-
-	//	Report an error saving a user
 
 	//	Return our data:
 	return retval, nil

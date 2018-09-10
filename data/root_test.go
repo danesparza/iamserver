@@ -3,9 +3,11 @@ package data_test
 import (
 	"os"
 	"path"
+	"sort"
 	"testing"
 
 	"github.com/danesparza/iamserver/data"
+	"github.com/xtgo/set"
 )
 
 //	Gets the database path for this environment:
@@ -63,4 +65,25 @@ func TestRoot_GetKey_ReturnsCorrectKey(t *testing.T) {
 	if expectedKey != string(actualKey) {
 		t.Errorf("GetKey failed:  Expected %s but got %s instead", expectedKey, actualKey)
 	}
+}
+
+func TestUniq(t *testing.T) {
+
+	//	Our regular slice o' emails
+	emails := []string{"esparza.dan@gmail.com", "danesparza@cagedtornado.com", "cmesparza@gmail.com", "esparza.dan@gmail.com"}
+
+	//	Convert them into a sortable slice:
+	data := sort.StringSlice(emails)
+
+	sort.Sort(data)     // sort the data first
+	n := set.Uniq(data) // Uniq returns the size of the set
+	data = data[:n]     // trim the duplicate elements
+
+	//	 Well looky here ... we have a unique (sorted) set of emails
+	// t.Logf("%+v", data)
+
+	if len(data) > 3 {
+		t.Errorf("Expecting only 3 unique elements, but found: %v", len(data))
+	}
+
 }
