@@ -3,9 +3,11 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/danesparza/badger"
+	"github.com/xtgo/set"
 	null "gopkg.in/guregu/null.v3"
 	"gopkg.in/guregu/null.v3/zero"
 )
@@ -161,10 +163,12 @@ func (store Manager) GetAllGroups(context User) ([]Group, error) {
 	return retval, nil
 }
 
-// AddUsersToGroup adds a user to the system
+// AddUsersToGroup adds user(s) to a group -- and tracks that relationship
+// at the group level and at the user level
 func (store Manager) AddUsersToGroup(context User, groupName string, users ...string) (Group, error) {
 	//	Our return item
 	retval := Group{}
+	affectedUsers := []User{}
 
 	//	First -- validate that the group exists
 	err := store.systemdb.View(func(txn *badger.Txn) error {
@@ -191,13 +195,38 @@ func (store Manager) AddUsersToGroup(context User, groupName string, users ...st
 		return retval, fmt.Errorf("Group does not exist")
 	}
 
-	//	Next -- validate that each of the users exist:
+	//	Next:
+	//	- Validate that each of the users exist
+	//	- Track each user in 'affectedUsers'
 	for index := 0; index <= len(users); index++ {
 
 		currentuser := users[index]
 
 		err := store.systemdb.View(func(txn *badger.Txn) error {
-			_, err := txn.Get(GetKey("User", currentuser))
+			item, err := txn.Get(GetKey("User", currentuser))
+
+			if err != nil {
+				return err
+			}
+
+			//	Deserialize the user and add to the list of affected users
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				currentuserObject := User{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &currentuserObject); err != nil {
+					return err
+				}
+
+				//	Add the object to our list of affected users:
+				affectedUsers = append(affectedUsers, currentuserObject)
+			}
+
 			return err
 		})
 
@@ -206,12 +235,23 @@ func (store Manager) AddUsersToGroup(context User, groupName string, users ...st
 		}
 	}
 
+	//	Get the group's new list of users from a merged (and deduped) list of:
+	//	- The existing group users
+	// 	- The list of users passed in
+	allGroupUsers := append(retval.Users, users...)
+	allUniqueGroupUsers := sort.StringSlice(allGroupUsers)
+
+	sort.Sort(allUniqueGroupUsers)                // sort the data first
+	n := set.Uniq(allUniqueGroupUsers)            // Uniq returns the size of the set
+	allUniqueGroupUsers = allUniqueGroupUsers[:n] // trim the duplicate elements
+
 	//	Then add each of users to both ...
 	//	the usergroup
+	retval.Users = allUniqueGroupUsers
 
 	//	and add the group to each user
 
-	//	Serialize to JSON format
+	//	Serialize the group to JSON format
 	encoded, err := json.Marshal(retval)
 	if err != nil {
 		return retval, fmt.Errorf("Problem serializing the data: %s", err)
@@ -225,8 +265,12 @@ func (store Manager) AddUsersToGroup(context User, groupName string, users ...st
 
 	//	If there was an error saving the data, report it:
 	if err != nil {
-		return retval, fmt.Errorf("Problem saving the data: %s", err)
+		return retval, fmt.Errorf("Problem saving the group: %s", err)
 	}
+
+	//	Save each affected user to the database too:
+
+	//	Report an error saving a user
 
 	//	Return our data:
 	return retval, nil
