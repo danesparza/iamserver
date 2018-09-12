@@ -27,7 +27,7 @@ Running this more than once may result in errors`,
 		defer db.Close()
 
 		//	Call bootstrap
-		user, secret, err := db.AuthSystemBootstrap()
+		user, secret, err := db.SystemBootstrap()
 
 		//	Report any errors
 		if err != nil {

@@ -87,3 +87,42 @@ func TestUniq(t *testing.T) {
 	}
 
 }
+
+func TestRoot_Bootstrap_Successful(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	//	Act
+	adminUser, adminSecret, err := db.SystemBootstrap()
+
+	//	Assert
+	if err != nil {
+		t.Errorf("SystemBootstrap - Should bootstrap without error, but got: %s", err)
+	}
+
+	if adminUser.Created.IsZero() || adminUser.Updated.IsZero() {
+		t.Errorf("SystemBootstrap failed: Should have set an item with the correct datetime: %+v", adminUser)
+	}
+
+	if adminUser.SecretHash == "" {
+		t.Errorf("SystemBootstrap failed: Should have set the hashed password correctly: %+v", adminUser)
+	}
+
+	if adminSecret == "" {
+		t.Errorf("SystemBootstrap failed: Should have returned the admin password correctly but got back blank")
+	}
+
+	t.Logf("New Admin user: %+v", adminUser)
+	t.Logf("New Admin user secret: %s", adminSecret)
+
+}

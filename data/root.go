@@ -54,22 +54,40 @@ func (store Manager) Close() error {
 	return nil
 }
 
-// AuthSystemBootstrap is a 'run-once' operation to setup up the system initially
-func (store Manager) AuthSystemBootstrap() (User, string, error) {
+// SystemBootstrap is a 'run-once' operation to setup up the system initially
+func (store Manager) SystemBootstrap() (User, string, error) {
 	adminUser := User{}
+	contextUser := User{Name: "System"}
 
 	//	Generate a password for the admin user
 	adminPassword := xid.New().String()
 
 	//	Create the admin user
-	contextUser := User{Name: "System"}
-	adminUser, err := store.AddUser(contextUser, User{Name: "admin"}, adminPassword)
+	adminUser, err := store.AddUser(contextUser, User{Name: "admin", Description: "System administrator"}, adminPassword)
 
 	if err != nil {
 		return adminUser, adminPassword, fmt.Errorf("Problem adding admin user: %s", err)
 	}
 
 	//	Create the Administrators group (add the admin user to the group)
+	adminGroup, err := store.AddGroup(contextUser, "Administrators", "Users who can fully administer the system")
+
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem creating the Administrators group: %s", err)
+	}
+
+	_, err = store.AddUsersToGroup(contextUser, adminGroup.Name, adminUser.Name)
+
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem adding the admin user to the Administrators group: %s", err)
+	}
+
+	//	Get the updated admin user:
+	adminUser, err = store.GetUser(contextUser, adminUser.Name)
+
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem getting the updated admin user: %s", err)
+	}
 
 	//	Create the system resource
 

@@ -54,6 +54,9 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 	//	Update the secret field:
 	user.SecretHash = string(hashedPassword)
 
+	//	Make sure it's initially set to 'enabled':
+	user.Enabled = true
+
 	//	Update the created / updated fields:
 	user.Created = time.Now()
 	user.Updated = time.Now()
