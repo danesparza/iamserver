@@ -26,11 +26,27 @@ func TestUser_AddUser_ValidUser_Successful(t *testing.T) {
 	testPassword := "testpass"
 
 	//	Act
-	_, err = db.AddUser(contextUser, testUser, testPassword)
+	newUser, err := db.AddUser(contextUser, testUser, testPassword)
 
 	//	Assert
 	if err != nil {
 		t.Errorf("AddUser - Should add user without error, but got: %s", err)
+	}
+
+	if newUser.Created.IsZero() || newUser.Updated.IsZero() {
+		t.Errorf("AddUser failed: Should have set an item with the correct datetime: %+v", newUser)
+	}
+
+	if newUser.CreatedBy != contextUser.Name {
+		t.Errorf("AddUser failed: Should have set an item with the correct 'created by' user: %+v", newUser)
+	}
+
+	if newUser.UpdatedBy != contextUser.Name {
+		t.Errorf("AddUser failed: Should have set an item with the correct 'updated by' user: %+v", newUser)
+	}
+
+	if newUser.SecretHash == "" || newUser.SecretHash == testPassword {
+		t.Errorf("AddUser failed: Should have set the hashed password correctly: %+v", newUser)
 	}
 
 }

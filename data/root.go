@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/danesparza/badger"
+	"github.com/rs/xid"
 )
 
 // Manager is the data manager
@@ -51,6 +52,35 @@ func (store Manager) Close() error {
 	}
 
 	return nil
+}
+
+// AuthSystemBootstrap is a 'run-once' operation to setup up the system initially
+func (store Manager) AuthSystemBootstrap() (User, string, error) {
+	adminUser := User{}
+
+	//	Generate a password for the admin user
+	adminPassword := xid.New().String()
+
+	//	Create the admin user
+	contextUser := User{Name: "System"}
+	adminUser, err := store.AddUser(contextUser, User{Name: "admin"}, adminPassword)
+
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem adding admin user: %s", err)
+	}
+
+	//	Create the Administrators group (add the admin user to the group)
+
+	//	Create the system resource
+
+	//	Create the initial system policies
+
+	//	Create the System_Admin role (and add some of the system policies to that role)
+
+	//	Attach the System_Admin role to the Administrators group
+
+	//	Return everything:
+	return adminUser, adminPassword, nil
 }
 
 // GetKey returns a key to be used in the storage system

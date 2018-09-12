@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/danesparza/badger"
+	"golang.org/x/crypto/bcrypt"
 	null "gopkg.in/guregu/null.v3"
 	"gopkg.in/guregu/null.v3/zero"
 )
@@ -43,6 +44,15 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 	if err == nil {
 		return retval, fmt.Errorf("User already exists")
 	}
+
+	//	Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return retval, fmt.Errorf("Problem hashing user password: %s", err)
+	}
+
+	//	Update the secret field:
+	user.SecretHash = string(hashedPassword)
 
 	//	Update the created / updated fields:
 	user.Created = time.Now()

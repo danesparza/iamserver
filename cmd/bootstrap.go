@@ -18,7 +18,7 @@ indices, admin user, and credentials.
 
 Running this more than once may result in errors`,
 	Run: func(cmd *cobra.Command, args []string) {
-		//	Spin up a SystemDB
+		//	Spin up a Manager
 		db, err := data.NewManager(viper.GetString("datastore.system"), viper.GetString("datastore.tokens"))
 		if err != nil {
 			log.Printf("[ERROR] Error trying to open the system database: %s", err)
@@ -27,9 +27,7 @@ Running this more than once may result in errors`,
 		defer db.Close()
 
 		//	Call bootstrap
-		// user, secret, err := db.AuthSystemBootstrap()
-		user := data.User{Name: "fixbootstrap"}
-		secret := "fixbootstrap"
+		user, secret, err := db.AuthSystemBootstrap()
 
 		//	Report any errors
 		if err != nil {
