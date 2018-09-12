@@ -3,9 +3,11 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/danesparza/badger"
+	"github.com/xtgo/set"
 	null "gopkg.in/guregu/null.v3"
 	"gopkg.in/guregu/null.v3/zero"
 )
@@ -13,15 +15,15 @@ import (
 // Resource represents a thing that can be acted on.  This is really only used for lookups when
 // editing a policy.  Because a policy can have wildcards, this type isn't used for policy validation.
 type Resource struct {
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Created     time.Time        `json:"created"`
-	CreatedBy   string           `json:"created_by"`
-	Updated     time.Time        `json:"updated"`
-	UpdatedBy   string           `json:"updated_by"`
-	Deleted     zero.Time        `json:"deleted"`
-	DeletedBy   null.String      `json:"deleted_by"`
-	Actions     []ResourceAction `json:"actions"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Created     time.Time   `json:"created"`
+	CreatedBy   string      `json:"created_by"`
+	Updated     time.Time   `json:"updated"`
+	UpdatedBy   string      `json:"updated_by"`
+	Deleted     zero.Time   `json:"deleted"`
+	DeletedBy   null.String `json:"deleted_by"`
+	Actions     []string    `json:"actions"`
 }
 
 // AddResource adds a resource to the system
@@ -153,6 +155,70 @@ func (store Manager) GetAllResources(context User) ([]Resource, error) {
 	//	If there was an error, report it:
 	if err != nil {
 		return retval, fmt.Errorf("Problem getting the list of items: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+}
+
+// AddActionToResource adds action(s) to a resource
+func (store Manager) AddActionToResource(context User, resourceName string, actions ...string) (Resource, error) {
+	//	Our return item
+	retval := Resource{}
+
+	//	First -- validate that the resource exists
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("Resource", resourceName))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return err
+			}
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return retval, fmt.Errorf("Resource does not exist")
+	}
+
+	//	Get the resources's new list of actions from a merged (and deduped) list of:
+	//	- The existing actions
+	// 	- The list of actions passed in
+	allActions := append(retval.Actions, actions...)
+	allUniqueActions := sort.StringSlice(allActions)
+
+	sort.Sort(allUniqueActions)             // sort the data first
+	n := set.Uniq(allUniqueActions)         // Uniq returns the size of the set
+	allUniqueActions = allUniqueActions[:n] // trim the duplicate elements
+
+	//	Then add actions the resource
+	retval.Actions = allUniqueActions
+
+	//	Serialize the group to JSON format
+	encoded, err := json.Marshal(retval)
+	if err != nil {
+		return retval, fmt.Errorf("Problem serializing the data: %s", err)
+	}
+
+	//	Save it to the database:
+	err = store.systemdb.Update(func(txn *badger.Txn) error {
+		err := txn.Set(GetKey("Resource", retval.Name), encoded)
+		return err
+	})
+
+	//	If there was an error saving the data, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem completing the resource updates: %s", err)
 	}
 
 	//	Return our data:
