@@ -1,9 +1,7 @@
 package main
 
-import (
-	"fmt"
-)
+import "github.com/danesparza/iamserver/cmd"
 
 func main() {
-	fmt.Println("Lame")
+	cmd.Execute()
 }
