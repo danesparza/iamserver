@@ -27,6 +27,8 @@ type User struct {
 	Deleted     zero.Time   `json:"deleted"`
 	DeletedBy   null.String `json:"deleted_by"`
 	Groups      []string    `json:"groups"`
+	Policies    []Policy    `json:"policies"`
+	Roles       []Role      `json:"roles"`
 }
 
 // AddUser adds a user to the system
