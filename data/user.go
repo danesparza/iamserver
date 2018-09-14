@@ -27,8 +27,8 @@ type User struct {
 	Deleted     zero.Time   `json:"deleted"`
 	DeletedBy   null.String `json:"deleted_by"`
 	Groups      []string    `json:"groups"`
-	Policies    []Policy    `json:"policies"`
-	Roles       []Role      `json:"roles"`
+	Policies    []string    `json:"policies"`
+	Roles       []string    `json:"roles"`
 }
 
 // AddUser adds a user to the system
@@ -58,6 +58,11 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 
 	//	Make sure it's initially set to 'enabled':
 	user.Enabled = true
+
+	//	Make sure (when adding a new user) groups/policies/roles are empty:
+	user.Groups = []string{}
+	user.Policies = []string{}
+	user.Roles = []string{}
 
 	//	Update the created / updated fields:
 	user.Created = time.Now()

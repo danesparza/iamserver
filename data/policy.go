@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/danesparza/iamserver/policy"
+
 	"github.com/danesparza/badger"
 	null "gopkg.in/guregu/null.v3"
 	"gopkg.in/guregu/null.v3/zero"
@@ -33,13 +35,13 @@ type Policy struct {
 }
 
 // AddPolicy adds a policy to the system
-func (store Manager) AddPolicy(context User, policy Policy) (Policy, error) {
+func (store Manager) AddPolicy(context User, newPolicy Policy) (Policy, error) {
 	//	Our return item
 	retval := Policy{}
 
 	//	First -- does the policy exist already?
 	err := store.systemdb.View(func(txn *badger.Txn) error {
-		_, err := txn.Get(GetKey("Policy", policy.Name))
+		_, err := txn.Get(GetKey("Policy", newPolicy.Name))
 		return err
 	})
 
@@ -48,21 +50,38 @@ func (store Manager) AddPolicy(context User, policy Policy) (Policy, error) {
 		return retval, fmt.Errorf("Policy already exists")
 	}
 
+	//	Check Effect
+	if (newPolicy.Effect != policy.Allow) && (newPolicy.Effect != policy.Deny) {
+		return retval, fmt.Errorf("Policy must have 'allow' or 'deny' effect")
+	}
+
+	// 	Check Resources / Actions (they can't be blank or empty)
+	if len(newPolicy.Resources) == 0 || len(newPolicy.Actions) == 0 {
+		return retval, fmt.Errorf("Policy must have 'resources' and 'actions' associated with it")
+	}
+
+	//	Associated resources have to exist
+
+	//	Make sure when adding a new policy, users / roles / groups are empty:
+	newPolicy.Users = []string{}
+	newPolicy.Roles = []string{}
+	newPolicy.Groups = []string{}
+
 	//	Update the created / updated fields:
-	policy.Created = time.Now()
-	policy.Updated = time.Now()
-	policy.CreatedBy = context.Name
-	policy.UpdatedBy = context.Name
+	newPolicy.Created = time.Now()
+	newPolicy.Updated = time.Now()
+	newPolicy.CreatedBy = context.Name
+	newPolicy.UpdatedBy = context.Name
 
 	//	Serialize to JSON format
-	encoded, err := json.Marshal(policy)
+	encoded, err := json.Marshal(newPolicy)
 	if err != nil {
 		return retval, fmt.Errorf("Problem serializing the data: %s", err)
 	}
 
 	//	Save it to the database:
 	err = store.systemdb.Update(func(txn *badger.Txn) error {
-		err := txn.Set(GetKey("Policy", policy.Name), encoded)
+		err := txn.Set(GetKey("Policy", newPolicy.Name), encoded)
 		return err
 	})
 
@@ -72,7 +91,7 @@ func (store Manager) AddPolicy(context User, policy Policy) (Policy, error) {
 	}
 
 	//	Set our retval:
-	retval = policy
+	retval = newPolicy
 
 	//	Return our data:
 	return retval, nil
