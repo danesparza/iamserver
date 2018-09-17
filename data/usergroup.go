@@ -25,7 +25,7 @@ type Group struct {
 	Users       []string    `json:"users"`
 }
 
-// AddGroup adds a user to the system
+// AddGroup adds a user group to the system
 func (store Manager) AddGroup(context User, groupName string, groupDescription string) (Group, error) {
 	//	Our return item
 	retval := Group{}
