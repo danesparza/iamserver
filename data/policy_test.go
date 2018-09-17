@@ -33,6 +33,7 @@ func TestPolicy_AddPolicy_ValidPolicy_Successful(t *testing.T) {
 			"Someaction",
 		},
 	}
+	_, err = db.AddResource(contextUser, "Someresource", "")
 
 	//	Act
 	newPolicy, err := db.AddPolicy(contextUser, testPolicy)
@@ -80,6 +81,7 @@ func TestPolicy_AddPolicy_AlreadyExists_ReturnsError(t *testing.T) {
 			"Someaction",
 		},
 	}
+	_, err = db.AddResource(contextUser, "Someresource", "")
 
 	//	Act
 	_, err = db.AddPolicy(contextUser, testPolicy)
@@ -120,6 +122,7 @@ func TestPolicy_AddPolicy_InvalidEffect_ReturnsError(t *testing.T) {
 			"Someaction",
 		},
 	}
+	_, err = db.AddResource(contextUser, "Someresource", "")
 
 	//	Act
 	_, err = db.AddPolicy(contextUser, testPolicy)

@@ -60,7 +60,27 @@ func (store Manager) AddPolicy(context User, newPolicy Policy) (Policy, error) {
 		return retval, fmt.Errorf("Policy must have 'resources' and 'actions' associated with it")
 	}
 
+	//	Policy must have at least one resource
+	if len(newPolicy.Resources) == 0 {
+		return retval, fmt.Errorf("Policy must have associated resources (but currently doesn't have any)")
+	}
+
 	//	Associated resources have to exist
+	for _, currentResource := range newPolicy.Resources {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+			_, err := txn.Get(GetKey("Resource", currentResource))
+			return err
+		})
+
+		if err != nil {
+			return retval, fmt.Errorf("Resource %s doesn't exist", currentResource)
+		}
+	}
+
+	//	Policy must have at least one action
+	if len(newPolicy.Actions) == 0 {
+		return retval, fmt.Errorf("Policy must have associated actions (but currently doesn't have any)")
+	}
 
 	//	Make sure when adding a new policy, users / roles / groups are empty:
 	newPolicy.Users = []string{}
