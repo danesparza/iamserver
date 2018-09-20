@@ -297,6 +297,262 @@ func (store Manager) AddPoliciesToRole(context User, roleName string, policies .
 	return retval, nil
 }
 
-// Attach role to user
+// AttachRoleToUsers attaches a role to the given user(s)
+func (store Manager) AttachRoleToUsers(context User, roleName string, users ...string) (Role, error) {
+	//	Our return item
+	retval := Role{}
+	affectedUsers := []User{}
 
-// Attach role to group
+	//	First -- validate that the role exists
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("Role", roleName))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return err
+			}
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return retval, fmt.Errorf("Role does not exist")
+	}
+
+	//	Next:
+	//	- Validate that each of the users exist
+	//	- Track each user in 'affectedUsers'
+	for _, currentuser := range users {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+			item, err := txn.Get(GetKey("User", currentuser))
+
+			if err != nil {
+				return err
+			}
+
+			//	Deserialize the user and add to the list of affected users
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				currentuserObject := User{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &currentuserObject); err != nil {
+					return err
+				}
+
+				//	Add the object to our list of affected users:
+				affectedUsers = append(affectedUsers, currentuserObject)
+			}
+
+			return err
+		})
+
+		if err != nil {
+			return retval, fmt.Errorf("User %s doesn't exist", currentuser)
+		}
+	}
+
+	//	Get the role's new list of users from a merged (and deduped) list of:
+	//	- The existing role users
+	// 	- The list of users passed in
+	allRoleUsers := append(retval.Users, users...)
+	allUniqueRoleUsers := sort.StringSlice(allRoleUsers)
+
+	sort.Sort(allUniqueRoleUsers)               // sort the data first
+	n := set.Uniq(allUniqueRoleUsers)           // Uniq returns the size of the set
+	allUniqueRoleUsers = allUniqueRoleUsers[:n] // trim the duplicate elements
+
+	//	Then add each of users to the role
+	retval.Users = allUniqueRoleUsers
+
+	//	Serialize the role to JSON format
+	encoded, err := json.Marshal(retval)
+	if err != nil {
+		return retval, fmt.Errorf("Problem serializing the data: %s", err)
+	}
+
+	//	Save it to the database:
+	err = store.systemdb.Update(func(txn *badger.Txn) error {
+		err := txn.Set(GetKey("Role", retval.Name), encoded)
+		if err != nil {
+			return err
+		}
+
+		//	Save each affected user to the database (as part of the same transaction):
+		for _, affectedUser := range affectedUsers {
+
+			//	and add the group to each user
+			currentRoles := append(affectedUser.Roles, roleName)
+			allUniqueCurrentRoles := sort.StringSlice(currentRoles)
+
+			sort.Sort(allUniqueCurrentRoles)                   // sort the data first
+			cn := set.Uniq(allUniqueCurrentRoles)              // Uniq returns the size of the set
+			allUniqueCurrentRoles = allUniqueCurrentRoles[:cn] // trim the duplicate elements
+			affectedUser.Roles = allUniqueCurrentRoles
+
+			encoded, err := json.Marshal(affectedUser)
+			if err != nil {
+				return err
+			}
+
+			err = txn.Set(GetKey("User", affectedUser.Name), encoded)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	//	If there was an error saving the data, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem completing the role updates: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+
+}
+
+// AttachRoleToGroups attaches a role to the given group(s)
+func (store Manager) AttachRoleToGroups(context User, roleName string, groups ...string) (Role, error) {
+	//	Our return item
+	retval := Role{}
+	affectedGroups := []Group{}
+
+	//	First -- validate that the role exists
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("Role", roleName))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return err
+			}
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return retval, fmt.Errorf("Role does not exist")
+	}
+
+	//	Next:
+	//	- Validate that each of the groups exist
+	//	- Track each group in 'affectedGroups'
+	for _, currentgroup := range groups {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+			item, err := txn.Get(GetKey("Group", currentgroup))
+
+			if err != nil {
+				return err
+			}
+
+			//	Deserialize the group and add to the list of affected groups
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				currentgroupObject := Group{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &currentgroupObject); err != nil {
+					return err
+				}
+
+				//	Add the object to our list of affected groups:
+				affectedGroups = append(affectedGroups, currentgroupObject)
+			}
+
+			return err
+		})
+
+		if err != nil {
+			return retval, fmt.Errorf("Group %s doesn't exist", currentgroup)
+		}
+	}
+
+	//	Get the role's new list of groups from a merged (and deduped) list of:
+	//	- The existing role groups
+	// 	- The list of groups passed in
+	allRoleGroups := append(retval.Groups, groups...)
+	allUniqueRoleGroups := sort.StringSlice(allRoleGroups)
+
+	sort.Sort(allUniqueRoleGroups)                // sort the data first
+	n := set.Uniq(allUniqueRoleGroups)            // Uniq returns the size of the set
+	allUniqueRoleGroups = allUniqueRoleGroups[:n] // trim the duplicate elements
+
+	//	Then add each of the groups to the role
+	retval.Groups = allUniqueRoleGroups
+
+	//	Serialize the role to JSON format
+	encoded, err := json.Marshal(retval)
+	if err != nil {
+		return retval, fmt.Errorf("Problem serializing the data: %s", err)
+	}
+
+	//	Save it to the database:
+	err = store.systemdb.Update(func(txn *badger.Txn) error {
+		err := txn.Set(GetKey("Role", retval.Name), encoded)
+		if err != nil {
+			return err
+		}
+
+		//	Save each affected group to the database (as part of the same transaction):
+		for _, affectedGroup := range affectedGroups {
+
+			//	and add the group to each role
+			currentRoles := append(affectedGroup.Roles, roleName)
+			allUniqueCurrentRoles := sort.StringSlice(currentRoles)
+
+			sort.Sort(allUniqueCurrentRoles)                   // sort the data first
+			cn := set.Uniq(allUniqueCurrentRoles)              // Uniq returns the size of the set
+			allUniqueCurrentRoles = allUniqueCurrentRoles[:cn] // trim the duplicate elements
+			affectedGroup.Roles = allUniqueCurrentRoles
+
+			encoded, err := json.Marshal(affectedGroup)
+			if err != nil {
+				return err
+			}
+
+			err = txn.Set(GetKey("Group", affectedGroup.Name), encoded)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	//	If there was an error saving the data, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem completing the role updates: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+
+}

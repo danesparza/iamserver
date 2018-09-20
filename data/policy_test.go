@@ -262,7 +262,7 @@ func TestPolicy_AttachPoliciesToUser_UserDoesntExist_ReturnsError(t *testing.T) 
 
 	//	Assert
 	if err == nil {
-		t.Errorf("AttachPolicyToUsers - Should throw error attempting to attach policies that don't exist but didn't get an error")
+		t.Errorf("AttachPolicyToUsers - Should throw error attempting to attach policies to users that don't exist but didn't get an error")
 	}
 }
 

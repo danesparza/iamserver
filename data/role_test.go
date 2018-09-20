@@ -212,3 +212,159 @@ func TestRole_AddPoliciesToRole_RoleDoesntExist_ReturnsError(t *testing.T) {
 	}
 
 }
+
+func TestRole_AttachRoleToUsers_PolicyDoesntExist_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Act
+
+	//	Add some users
+	db.AddUser(contextUser, data.User{Name: "Unittestuser1"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser2"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser3"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser4"}, "testpass")
+
+	//	Attempt to attach roles that don't exist yet
+	retrole, err := db.AttachRoleToUsers(contextUser, "Bad role 1", "Unittestuser1", "Unittestuser2", "Unittestuser3")
+
+	// Sanity check the error
+	t.Logf("AttachRoleToUsers error: %s", err)
+
+	if len(retrole.Users) > 0 {
+		t.Errorf("AttachRoleToUsers - Should not have attached roles that don't exist.")
+	}
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AttachRoleToUsers - Should throw error attempting to attach roles that don't exist but didn't get an error")
+	}
+}
+
+func TestRole_AttachRoleToGroups_PolicyDoesntExist_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Act
+
+	//	Add some groups
+	db.AddGroup(contextUser, "Unittestgroup1", "")
+	db.AddGroup(contextUser, "Unittestgroup2", "")
+	db.AddGroup(contextUser, "Unittestgroup3", "")
+	db.AddGroup(contextUser, "Unittestgroup4", "")
+
+	//	Attempt to attach roles that don't exist yet
+	retrole, err := db.AttachRoleToGroups(contextUser, "Bad role 1", "Unittestgroup1", "Unittestgroup2", "Unittestgroup3")
+
+	// Sanity check the error
+	t.Logf("AttachRoleToGroups error: %s", err)
+
+	if len(retrole.Groups) > 0 {
+		t.Errorf("AttachRoleToGroups - Should not have attached roles that don't exist.")
+	}
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AttachRoleToGroups - Should throw error attempting to attach roles that don't exist but didn't get an error")
+	}
+
+}
+
+func TestRole_AttachRoleToUsers_UserDoesntExist_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Add a role
+	newRole, _ := db.AddRole(contextUser, "UnitTest1", "")
+
+	//	Act
+
+	//	Attempt to attach role to users that don't exist yet
+	retrole, err := db.AttachRoleToUsers(contextUser, newRole.Name, "Unittestuser1", "Unittestuser2", "Unittestuser3")
+
+	// Sanity check the error
+	// t.Logf("AttachRoleToUsers error: %s", err)
+
+	if len(retrole.Users) > 0 {
+		t.Errorf("AttachRoleToUsers - Should not have attached role to users that don't exist.")
+	}
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AttachRoleToUsers - Should throw error attempting to attach role to users that don't exist but didn't get an error")
+	}
+}
+
+func TestRole_AttachRoleToGroups_GroupDoesntExist_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Add a role
+	newRole, _ := db.AddRole(contextUser, "UnitTest1", "")
+
+	//	Act
+
+	//	Attempt to attach role to groups that don't exist yet
+	retrole, err := db.AttachRoleToGroups(contextUser, newRole.Name, "Unittestgroup1", "Unittestgroup2", "Unittestgroup3")
+
+	// Sanity check the error
+	// t.Logf("AttachRoleToGroups error: %s", err)
+
+	if len(retrole.Groups) > 0 {
+		t.Errorf("AttachRoleToGroups - Should not have attached role to groups that don't exist.")
+	}
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AttachRoleToGroups - Should throw error attempting to attach role to groups that don't exist but didn't get an error")
+	}
+
+}
