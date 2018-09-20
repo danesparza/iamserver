@@ -202,7 +202,7 @@ func TestPolicy_AttachPoliciesToGroup_PolicyDoesntExist_ReturnsError(t *testing.
 	retpolicy, err := db.AttachPolicyToGroups(contextUser, "Bad policy 1", "Unittestgroup1", "Unittestgroup2", "Unittestgroup3")
 
 	// Sanity check the error
-	t.Logf("AttachPolicyToGroups error: %s", err)
+	// t.Logf("AttachPolicyToGroups error: %s", err)
 
 	if len(retpolicy.Users) > 0 {
 		t.Errorf("AttachPolicyToGroups - Should not have attached policies that don't exist.")
