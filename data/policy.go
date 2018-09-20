@@ -3,9 +3,11 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/danesparza/iamserver/policy"
+	"github.com/xtgo/set"
 
 	"github.com/danesparza/badger"
 	null "gopkg.in/guregu/null.v3"
@@ -117,8 +119,262 @@ func (store Manager) AddPolicy(context User, newPolicy Policy) (Policy, error) {
 	return retval, nil
 }
 
-// Add policy to role
+// AttachPolicyToUsers attaches a policy to the given user(s)
+func (store Manager) AttachPolicyToUsers(context User, policyName string, users ...string) (Policy, error) {
+	//	Our return item
+	retval := Policy{}
+	affectedUsers := []User{}
 
-// Attach policy to user
+	//	First -- validate that the policy exists
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("Policy", policyName))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
 
-// Attach policy to group
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return err
+			}
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return retval, fmt.Errorf("Policy does not exist")
+	}
+
+	//	Next:
+	//	- Validate that each of the users exist
+	//	- Track each user in 'affectedUsers'
+	for _, currentuser := range users {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+			item, err := txn.Get(GetKey("User", currentuser))
+
+			if err != nil {
+				return err
+			}
+
+			//	Deserialize the user and add to the list of affected users
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				currentuserObject := User{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &currentuserObject); err != nil {
+					return err
+				}
+
+				//	Add the object to our list of affected users:
+				affectedUsers = append(affectedUsers, currentuserObject)
+			}
+
+			return err
+		})
+
+		if err != nil {
+			return retval, fmt.Errorf("User %s doesn't exist", currentuser)
+		}
+	}
+
+	//	Get the policy's new list of users from a merged (and deduped) list of:
+	//	- The existing policy users
+	// 	- The list of users passed in
+	allPolicyUsers := append(retval.Users, users...)
+	allUniquePolicyUsers := sort.StringSlice(allPolicyUsers)
+
+	sort.Sort(allUniquePolicyUsers)                 // sort the data first
+	n := set.Uniq(allUniquePolicyUsers)             // Uniq returns the size of the set
+	allUniquePolicyUsers = allUniquePolicyUsers[:n] // trim the duplicate elements
+
+	//	Then add each of users to the policy
+	retval.Users = allUniquePolicyUsers
+
+	//	Serialize the policy to JSON format
+	encoded, err := json.Marshal(retval)
+	if err != nil {
+		return retval, fmt.Errorf("Problem serializing the data: %s", err)
+	}
+
+	//	Save it to the database:
+	err = store.systemdb.Update(func(txn *badger.Txn) error {
+		err := txn.Set(GetKey("Policy", retval.Name), encoded)
+		if err != nil {
+			return err
+		}
+
+		//	Save each affected user to the database (as part of the same transaction):
+		for _, affectedUser := range affectedUsers {
+
+			//	and add the group to each user
+			currentPolicies := append(affectedUser.Policies, policyName)
+			allUniqueCurrentPolicies := sort.StringSlice(currentPolicies)
+
+			sort.Sort(allUniqueCurrentPolicies)                      // sort the data first
+			cn := set.Uniq(allUniqueCurrentPolicies)                 // Uniq returns the size of the set
+			allUniqueCurrentPolicies = allUniqueCurrentPolicies[:cn] // trim the duplicate elements
+			affectedUser.Policies = allUniqueCurrentPolicies
+
+			encoded, err := json.Marshal(affectedUser)
+			if err != nil {
+				return err
+			}
+
+			err = txn.Set(GetKey("User", affectedUser.Name), encoded)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	//	If there was an error saving the data, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem completing the policy updates: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+
+}
+
+// AttachPolicyToGroups attaches a policy to the given group(s)
+func (store Manager) AttachPolicyToGroups(context User, policyName string, groups ...string) (Policy, error) {
+	//	Our return item
+	retval := Policy{}
+	affectedGroups := []Group{}
+
+	//	First -- validate that the policy exists
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("Policy", policyName))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return err
+			}
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return retval, fmt.Errorf("Policy does not exist")
+	}
+
+	//	Next:
+	//	- Validate that each of the groups exist
+	//	- Track each group in 'affectedGroups'
+	for _, currentgroup := range groups {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+			item, err := txn.Get(GetKey("Group", currentgroup))
+
+			if err != nil {
+				return err
+			}
+
+			//	Deserialize the group and add to the list of affected groups
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				currentgroupObject := Group{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &currentgroupObject); err != nil {
+					return err
+				}
+
+				//	Add the object to our list of affected groups:
+				affectedGroups = append(affectedGroups, currentgroupObject)
+			}
+
+			return err
+		})
+
+		if err != nil {
+			return retval, fmt.Errorf("Group %s doesn't exist", currentgroup)
+		}
+	}
+
+	//	Get the policy's new list of groups from a merged (and deduped) list of:
+	//	- The existing policy groups
+	// 	- The list of groups passed in
+	allPolicyGroups := append(retval.Groups, groups...)
+	allUniquePolicyGroups := sort.StringSlice(allPolicyGroups)
+
+	sort.Sort(allUniquePolicyGroups)                  // sort the data first
+	n := set.Uniq(allUniquePolicyGroups)              // Uniq returns the size of the set
+	allUniquePolicyGroups = allUniquePolicyGroups[:n] // trim the duplicate elements
+
+	//	Then add each of the groups to the policy
+	retval.Groups = allUniquePolicyGroups
+
+	//	Serialize the policy to JSON format
+	encoded, err := json.Marshal(retval)
+	if err != nil {
+		return retval, fmt.Errorf("Problem serializing the data: %s", err)
+	}
+
+	//	Save it to the database:
+	err = store.systemdb.Update(func(txn *badger.Txn) error {
+		err := txn.Set(GetKey("Policy", retval.Name), encoded)
+		if err != nil {
+			return err
+		}
+
+		//	Save each affected group to the database (as part of the same transaction):
+		for _, affectedGroup := range affectedGroups {
+
+			//	and add the group to each user
+			currentPolicies := append(affectedGroup.Policies, policyName)
+			allUniqueCurrentPolicies := sort.StringSlice(currentPolicies)
+
+			sort.Sort(allUniqueCurrentPolicies)                      // sort the data first
+			cn := set.Uniq(allUniqueCurrentPolicies)                 // Uniq returns the size of the set
+			allUniqueCurrentPolicies = allUniqueCurrentPolicies[:cn] // trim the duplicate elements
+			affectedGroup.Policies = allUniqueCurrentPolicies
+
+			encoded, err := json.Marshal(affectedGroup)
+			if err != nil {
+				return err
+			}
+
+			err = txn.Set(GetKey("Group", affectedGroup.Name), encoded)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	//	If there was an error saving the data, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem completing the policy updates: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+
+}

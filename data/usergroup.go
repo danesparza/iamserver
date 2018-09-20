@@ -23,6 +23,8 @@ type Group struct {
 	Deleted     zero.Time   `json:"deleted"`
 	DeletedBy   null.String `json:"deleted_by"`
 	Users       []string    `json:"users"`
+	Policies    []string    `json:"policies"`
+	Roles       []string    `json:"roles"`
 }
 
 // AddGroup adds a user group to the system

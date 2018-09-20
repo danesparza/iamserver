@@ -133,3 +133,84 @@ func TestPolicy_AddPolicy_InvalidEffect_ReturnsError(t *testing.T) {
 	}
 
 }
+
+func TestPolicy_AttachPoliciesToUser_PolicyDoesntExist_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Act
+
+	//	Add some users
+	db.AddUser(contextUser, data.User{Name: "Unittestuser1"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser2"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser3"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser4"}, "testpass")
+
+	//	Attempt to attach policies that don't exist yet
+	retpolicy, err := db.AttachPolicyToUsers(contextUser, "Bad policy 1", "Unittestuser1", "Unittestuser2", "Unittestuser3")
+
+	// Sanity check the error
+	// t.Logf("AttachPolicyToUsers error: %s", err)
+
+	if len(retpolicy.Users) > 0 {
+		t.Errorf("AttachPolicyToUsers - Should not have attached policies that don't exist.")
+	}
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AttachPolicyToUsers - Should throw error attempting to attach policies that don't exist but didn't get an error")
+	}
+}
+
+func TestPolicy_AttachPoliciesToGroup_PolicyDoesntExist_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Act
+
+	//	Add some groups
+	db.AddGroup(contextUser, "Unittestgroup1", "")
+	db.AddGroup(contextUser, "Unittestgroup2", "")
+	db.AddGroup(contextUser, "Unittestgroup3", "")
+	db.AddGroup(contextUser, "Unittestgroup4", "")
+
+	//	Attempt to attach policies that don't exist yet
+	retpolicy, err := db.AttachPolicyToGroups(contextUser, "Bad policy 1", "Unittestgroup1", "Unittestgroup2", "Unittestgroup3")
+
+	// Sanity check the error
+	t.Logf("AttachPolicyToGroups error: %s", err)
+
+	if len(retpolicy.Users) > 0 {
+		t.Errorf("AttachPolicyToGroups - Should not have attached policies that don't exist.")
+	}
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AttachPolicyToGroups - Should throw error attempting to attach policies that don't exist but didn't get an error")
+	}
+
+}
