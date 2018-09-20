@@ -296,3 +296,7 @@ func (store Manager) AddPoliciesToRole(context User, roleName string, policies .
 	//	Return our data:
 	return retval, nil
 }
+
+// Attach role to user
+
+// Attach role to group

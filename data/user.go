@@ -181,3 +181,9 @@ func (store Manager) GetAllUsers(context User) ([]User, error) {
 	//	Return our data:
 	return retval, nil
 }
+
+// Get policies for a user.  Chains might include:
+// User -> Policies
+// User -> Group -> Policies
+// User -> Role -> Policies
+// User -> Group -> Role -> Policies
