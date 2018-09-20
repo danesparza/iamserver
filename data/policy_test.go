@@ -214,3 +214,69 @@ func TestPolicy_AttachPoliciesToGroup_PolicyDoesntExist_ReturnsError(t *testing.
 	}
 
 }
+
+func TestPolicy_AttachPoliciesToUser_ValidParams_ReturnsPolicy(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Act
+
+	//	Add some users
+	db.AddUser(contextUser, data.User{Name: "Unittestuser1"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser2"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser3"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser4"}, "testpass")
+
+	//	Add a resource
+	db.AddResource(contextUser, "Someresource", "")
+
+	//	Add a policy
+	testPolicy := data.Policy{
+		Name:   "UnitTest1",
+		Effect: policy.Allow,
+		Resources: []string{
+			"Someresource",
+		},
+		Actions: []string{
+			"Someaction",
+		},
+	}
+
+	newPolicy, err := db.AddPolicy(contextUser, testPolicy)
+
+	//	Attempt to attach the policy to the users
+	retpolicy, err := db.AttachPolicyToUsers(contextUser, newPolicy.Name, "Unittestuser1", "Unittestuser2", "Unittestuser3")
+
+	//	Assert
+	if err != nil {
+		t.Errorf("AttachPolicyToUsers - Should attach policy without an error, but got %s", err)
+	}
+
+	if len(retpolicy.Users) != 3 {
+		t.Errorf("AttachPolicyToUsers - Should have attached policy to 3 users")
+	}
+
+	//	Sanity check the list of users:
+	// t.Logf("Updated policy -- %+v", retpolicy)
+
+	//	Sanity check that the users have the new policy now:
+	user1, _ := db.GetUser(contextUser, "Unittestuser1")
+
+	// t.Logf("Updated user -- %+v", user1)
+
+	if len(user1.Policies) == 0 {
+		t.Errorf("AttachPolicyToUsers - Should have attached policy to Unittestuser1, but policy is not attached to the user")
+	}
+}
