@@ -204,13 +204,116 @@ func TestPolicy_AttachPoliciesToGroup_PolicyDoesntExist_ReturnsError(t *testing.
 	// Sanity check the error
 	// t.Logf("AttachPolicyToGroups error: %s", err)
 
-	if len(retpolicy.Users) > 0 {
+	if len(retpolicy.Groups) > 0 {
 		t.Errorf("AttachPolicyToGroups - Should not have attached policies that don't exist.")
 	}
 
 	//	Assert
 	if err == nil {
 		t.Errorf("AttachPolicyToGroups - Should throw error attempting to attach policies that don't exist but didn't get an error")
+	}
+
+}
+
+func TestPolicy_AttachPoliciesToUser_UserDoesntExist_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Add a resource
+	db.AddResource(contextUser, "Someresource", "")
+
+	//	Add a policy
+	testPolicy := data.Policy{
+		Name:   "UnitTest1",
+		Effect: policy.Allow,
+		Resources: []string{
+			"Someresource",
+		},
+		Actions: []string{
+			"Someaction",
+		},
+	}
+
+	newPolicy, err := db.AddPolicy(contextUser, testPolicy)
+
+	//	Act
+
+	//	Attempt to attach policies to users that don't exist yet
+	retpolicy, err := db.AttachPolicyToUsers(contextUser, newPolicy.Name, "Unittestuser1", "Unittestuser2", "Unittestuser3")
+
+	// Sanity check the error
+	// t.Logf("AttachPolicyToUsers error: %s", err)
+
+	if len(retpolicy.Users) > 0 {
+		t.Errorf("AttachPolicyToUsers - Should not have attached policies to users that don't exist.")
+	}
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AttachPolicyToUsers - Should throw error attempting to attach policies that don't exist but didn't get an error")
+	}
+}
+
+func TestPolicy_AttachPoliciesToGroup_GroupDoesntExist_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Add a resource
+	db.AddResource(contextUser, "Someresource", "")
+
+	//	Add a policy
+	testPolicy := data.Policy{
+		Name:   "UnitTest1",
+		Effect: policy.Allow,
+		Resources: []string{
+			"Someresource",
+		},
+		Actions: []string{
+			"Someaction",
+		},
+	}
+
+	newPolicy, err := db.AddPolicy(contextUser, testPolicy)
+
+	//	Act
+
+	//	Attempt to attach policies to groups that don't exist yet
+	retpolicy, err := db.AttachPolicyToGroups(contextUser, newPolicy.Name, "Unittestgroup1", "Unittestgroup2", "Unittestgroup3")
+
+	// Sanity check the error
+	// t.Logf("AttachPolicyToGroups error: %s", err)
+
+	if len(retpolicy.Groups) > 0 {
+		t.Errorf("AttachPolicyToGroups - Should not have attached policies to groups that don't exist.")
+	}
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AttachPolicyToGroups - Should throw error attempting to attach policies to groups that don't exist but didn't get an error")
 	}
 
 }
