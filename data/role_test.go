@@ -369,6 +369,106 @@ func TestRole_AttachRoleToGroups_GroupDoesntExist_ReturnsError(t *testing.T) {
 
 }
 
-//	Valid params / user
+func TestRole_AttachRoleToUser_ValidParams_ReturnsRole(t *testing.T) {
 
-// 	Valid params / group
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Act
+
+	//	Add some users
+	db.AddUser(contextUser, data.User{Name: "Unittestuser1"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser2"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser3"}, "testpass")
+	db.AddUser(contextUser, data.User{Name: "Unittestuser4"}, "testpass")
+
+	//	Add a role
+	newRole, _ := db.AddRole(contextUser, "UnitTest1", "")
+
+	//	Attempt to attach the role to the users
+	retrole, err := db.AttachRoleToUsers(contextUser, newRole.Name, "Unittestuser1", "Unittestuser2", "Unittestuser3")
+
+	//	Assert
+	if err != nil {
+		t.Errorf("AttachRoleToUsers - Should attach role without an error, but got %s", err)
+	}
+
+	if len(retrole.Users) != 3 {
+		t.Errorf("AttachRoleToUsers - Should have attached role to 3 users")
+	}
+
+	//	Sanity check the list of users:
+	// t.Logf("Updated role -- %+v", retrole)
+
+	//	Sanity check that the users have the new role now:
+	user1, _ := db.GetUser(contextUser, "Unittestuser1")
+
+	// t.Logf("Updated user -- %+v", user1)
+
+	if len(user1.Roles) == 0 {
+		t.Errorf("AttachRoleToUsers - Should have attached role to Unittestuser1, but role is not attached")
+	}
+}
+
+func TestRole_AttachRoleToGroup_ValidParams_ReturnsRole(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Act
+
+	//	Add some groups
+	db.AddGroup(contextUser, "Unittestgroup1", "")
+	db.AddGroup(contextUser, "Unittestgroup2", "")
+	db.AddGroup(contextUser, "Unittestgroup3", "")
+	db.AddGroup(contextUser, "Unittestgroup4", "")
+
+	//	Add a role
+	newRole, _ := db.AddRole(contextUser, "UnitTest1", "")
+
+	//	Attempt to attach the role to the groups
+	retrole, err := db.AttachRoleToGroups(contextUser, newRole.Name, "Unittestgroup1", "Unittestgroup2", "Unittestgroup3")
+
+	//	Assert
+	if err != nil {
+		t.Errorf("AttachRoleToGroups - Should attach role without an error, but got %s", err)
+	}
+
+	if len(retrole.Groups) != 3 {
+		t.Errorf("AttachRoleToGroups - Should have attached role to 3 groups")
+	}
+
+	//	Sanity check the list of groups:
+	// t.Logf("Updated role -- %+v", retrole)
+
+	//	Sanity check that the groups have the new role now:
+	group1, _ := db.GetGroup(contextUser, "Unittestgroup1")
+
+	// t.Logf("Updated group -- %+v", group1)
+
+	if len(group1.Roles) == 0 {
+		t.Errorf("AttachRoleToGroups - Should have attached role to Unittestgroup1, but role is not attached")
+	}
+}
