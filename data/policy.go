@@ -378,3 +378,173 @@ func (store Manager) AttachPolicyToGroups(context User, policyName string, group
 	return retval, nil
 
 }
+
+// GetPoliciesForUser gets policies for a user.  Chains include:
+// User -> Policies
+// User -> Role -> Policies
+// User -> Group -> Policies
+// User -> Group -> Role -> Policies
+func (store Manager) GetPoliciesForUser(context User, userName string) ([]Policy, error) {
+	//	Our return item
+	retval := []Policy{}
+	user := User{}
+	policiesInEffect := []string{}
+	rolesInEffect := []string{}
+
+	//	First -- validate that the user exists
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("User", userName))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &user); err != nil {
+				return err
+			}
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return retval, fmt.Errorf("User does not exist")
+	}
+
+	//	Add the user policies to policiesInEffect
+	for _, currentPolicy := range user.Policies {
+		policiesInEffect = append(policiesInEffect, currentPolicy)
+	}
+
+	//	Add user roles to rolesInEffect
+	for _, currentRole := range user.Roles {
+		rolesInEffect = append(rolesInEffect, currentRole)
+	}
+
+	//	Find the groups this user is in
+	for _, currentGroup := range user.Groups {
+
+		store.systemdb.View(func(txn *badger.Txn) error {
+			item, err := txn.Get(GetKey("Group", currentGroup))
+
+			if err != nil {
+				return err
+			}
+
+			//	Deserialize the group to get the lists of policies and roles
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				group := Group{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &group); err != nil {
+					return err
+				}
+
+				//	Add the group policies to policiesInEffect
+				for _, currentPolicy := range group.Policies {
+					policiesInEffect = append(policiesInEffect, currentPolicy)
+				}
+
+				//	Add group roles to rolesInEffect
+				for _, currentRole := range group.Roles {
+					rolesInEffect = append(rolesInEffect, currentRole)
+				}
+			}
+
+			return err
+		})
+	}
+
+	//	Compress and sort the role list
+	allUniquerolesInEffect := sort.StringSlice(rolesInEffect)
+
+	sort.Sort(allUniquerolesInEffect)          // sort the data first
+	n := set.Uniq(allUniquerolesInEffect)      // Uniq returns the size of the set
+	rolesInEffect = allUniquerolesInEffect[:n] // trim the duplicate elements
+
+	//	For each role in rolesInEffect
+	for _, currentRole := range rolesInEffect {
+
+		store.systemdb.View(func(txn *badger.Txn) error {
+			item, err := txn.Get(GetKey("Role", currentRole))
+
+			if err != nil {
+				return err
+			}
+
+			//	Deserialize the role to get the list of policies
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				role := Role{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &role); err != nil {
+					return err
+				}
+
+				//	Add the role policies to policiesInEffect
+				for _, currentPolicy := range role.Policies {
+					policiesInEffect = append(policiesInEffect, currentPolicy)
+				}
+			}
+
+			return err
+		})
+	}
+
+	//	Compress and sort the policy list
+	allUniquepoliciesInEffect := sort.StringSlice(policiesInEffect)
+
+	sort.Sort(allUniquepoliciesInEffect)             // sort the data first
+	n = set.Uniq(allUniquepoliciesInEffect)          // Uniq returns the size of the set
+	policiesInEffect = allUniquepoliciesInEffect[:n] // trim the duplicate elements
+
+	//	Get the actual policies for each of the policy names
+	for _, currentPolicy := range policiesInEffect {
+
+		store.systemdb.View(func(txn *badger.Txn) error {
+			item, err := txn.Get(GetKey("Policy", currentPolicy))
+
+			if err != nil {
+				return err
+			}
+
+			//	Deserialize the role to get the list of policies
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				policy := Policy{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &policy); err != nil {
+					return err
+				}
+
+				//	Add the policy to the return value:
+				retval = append(retval, policy)
+			}
+
+			return err
+		})
+	}
+
+	//	Return the list
+	return retval, nil
+}
