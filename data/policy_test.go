@@ -383,3 +383,69 @@ func TestPolicy_AttachPoliciesToUser_ValidParams_ReturnsPolicy(t *testing.T) {
 		t.Errorf("AttachPolicyToUsers - Should have attached policy to Unittestuser1, but policy is not attached to the user")
 	}
 }
+
+func TestPolicy_AttachPoliciesToGroup_ValidParams_ReturnsPolicy(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	//	Act
+
+	//	Add some groups
+	db.AddGroup(contextUser, "Unittestgroup1", "")
+	db.AddGroup(contextUser, "Unittestgroup2", "")
+	db.AddGroup(contextUser, "Unittestgroup3", "")
+	db.AddGroup(contextUser, "Unittestgroup4", "")
+
+	//	Add a resource
+	db.AddResource(contextUser, "Someresource", "")
+
+	//	Add a policy
+	testPolicy := data.Policy{
+		Name:   "UnitTest1",
+		Effect: policy.Allow,
+		Resources: []string{
+			"Someresource",
+		},
+		Actions: []string{
+			"Someaction",
+		},
+	}
+
+	newPolicy, err := db.AddPolicy(contextUser, testPolicy)
+
+	//	Attempt to attach the policy to the groups
+	retpolicy, err := db.AttachPolicyToGroups(contextUser, newPolicy.Name, "Unittestgroup1", "Unittestgroup2", "Unittestgroup3")
+
+	//	Assert
+	if err != nil {
+		t.Errorf("AttachPolicyToGroups - Should attach policy without an error, but got %s", err)
+	}
+
+	if len(retpolicy.Groups) != 3 {
+		t.Errorf("AttachPolicyToGroups - Should have attached policy to 3 groups")
+	}
+
+	//	Sanity check the list of groups:
+	// t.Logf("Updated policy -- %+v", retpolicy)
+
+	//	Sanity check that the groups have the new policy now:
+	group1, _ := db.GetGroup(contextUser, "Unittestgroup1")
+
+	// t.Logf("Updated group -- %+v", group1)
+
+	if len(group1.Policies) == 0 {
+		t.Errorf("AttachPolicyToGroups - Should have attached policy to Unittestgroup1, but policy is not attached")
+	}
+}

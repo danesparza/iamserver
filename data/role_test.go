@@ -241,7 +241,7 @@ func TestRole_AttachRoleToUsers_PolicyDoesntExist_ReturnsError(t *testing.T) {
 	retrole, err := db.AttachRoleToUsers(contextUser, "Bad role 1", "Unittestuser1", "Unittestuser2", "Unittestuser3")
 
 	// Sanity check the error
-	t.Logf("AttachRoleToUsers error: %s", err)
+	// t.Logf("AttachRoleToUsers error: %s", err)
 
 	if len(retrole.Users) > 0 {
 		t.Errorf("AttachRoleToUsers - Should not have attached roles that don't exist.")
@@ -281,7 +281,7 @@ func TestRole_AttachRoleToGroups_PolicyDoesntExist_ReturnsError(t *testing.T) {
 	retrole, err := db.AttachRoleToGroups(contextUser, "Bad role 1", "Unittestgroup1", "Unittestgroup2", "Unittestgroup3")
 
 	// Sanity check the error
-	t.Logf("AttachRoleToGroups error: %s", err)
+	// t.Logf("AttachRoleToGroups error: %s", err)
 
 	if len(retrole.Groups) > 0 {
 		t.Errorf("AttachRoleToGroups - Should not have attached roles that don't exist.")
@@ -368,3 +368,7 @@ func TestRole_AttachRoleToGroups_GroupDoesntExist_ReturnsError(t *testing.T) {
 	}
 
 }
+
+//	Valid params / user
+
+// 	Valid params / group
