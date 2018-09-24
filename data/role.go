@@ -166,9 +166,9 @@ func (store Manager) GetAllRoles(context User) ([]Role, error) {
 	return retval, nil
 }
 
-// AddPoliciesToRole adds policies to a role -- and tracks that relationship
+// AttachPoliciesToRole attaches policies to a role -- and tracks that relationship
 // at the role level and at the policy level
-func (store Manager) AddPoliciesToRole(context User, roleName string, policies ...string) (Role, error) {
+func (store Manager) AttachPoliciesToRole(context User, roleName string, policies ...string) (Role, error) {
 	//	Our return item
 	retval := Role{}
 	affectedPolicies := []Policy{}

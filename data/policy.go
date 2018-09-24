@@ -384,9 +384,9 @@ func (store Manager) AttachPolicyToGroups(context User, policyName string, group
 // User -> Role -> Policies
 // User -> Group -> Policies
 // User -> Group -> Role -> Policies
-func (store Manager) GetPoliciesForUser(context User, userName string) ([]Policy, error) {
+func (store Manager) GetPoliciesForUser(context User, userName string) (map[string]Policy, error) {
 	//	Our return item
-	retval := []Policy{}
+	retval := make(map[string]Policy)
 	user := User{}
 	policiesInEffect := []string{}
 	rolesInEffect := []string{}
@@ -538,7 +538,7 @@ func (store Manager) GetPoliciesForUser(context User, userName string) ([]Policy
 				}
 
 				//	Add the policy to the return value:
-				retval = append(retval, policy)
+				retval[policy.Name] = policy
 			}
 
 			return err
