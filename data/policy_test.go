@@ -3,6 +3,7 @@ package data_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/danesparza/iamserver/data"
 	"github.com/danesparza/iamserver/policy"
@@ -596,13 +597,22 @@ func TestPolicy_GetPoliciesForUser_ValidParams_ReturnsPolicies(t *testing.T) {
 	db.AttachRoleToGroups(contextUser, "Healthcare access", "Alliance")
 
 	//	ACT
+	start := time.Now() // Starting the stopwatch
+
 	malPolicies, err := db.GetPoliciesForUser(contextUser, "malreynolds")
+
+	stop := time.Now()                                       // Stopping the stopwatch
+	elapsed := stop.Sub(start)                               // Figuring out the time elapsed
+	t.Logf("GetPoliciesForUser elapsed time: %v\n", elapsed) // Logging elapsed time
+
+	dobPolicies, err := db.GetPoliciesForUser(contextUser, "dobson")
 
 	//	ASSERT
 	if err != nil {
 		t.Errorf("GetPoliciesForUser - Should get policies without an error, but got %s", err)
 	}
 
+	//	-- Check mal's policies:
 	if _, hasPolicy := malPolicies[shipUser.Name]; hasPolicy != true {
 		t.Errorf("GetPoliciesForUser - Mal should have '%s', but doesn't.", shipUser.Name)
 	}
@@ -619,7 +629,13 @@ func TestPolicy_GetPoliciesForUser_ValidParams_ReturnsPolicies(t *testing.T) {
 		t.Errorf("GetPoliciesForUser - Mal should NOT have '%s', but does!", healthcareAccess.Name)
 	}
 
-	//	-- Sanity check policies:
-	// t.Logf("Policies for mal: %+v", malPolicies)
+	//	-- Check dobson's policies:
+	if _, hasPolicy := dobPolicies[healthcareAccess.Name]; hasPolicy != true {
+		t.Errorf("GetPoliciesForUser - Dobson should have '%s', but doesn't.", healthcareAccess.Name)
+	}
+
+	if _, hasPolicy := dobPolicies[captainAccess.Name]; hasPolicy != false {
+		t.Errorf("GetPoliciesForUser - Dobson should NOT have '%s', but does!", captainAccess.Name)
+	}
 
 }
