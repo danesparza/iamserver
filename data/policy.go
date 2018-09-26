@@ -17,9 +17,9 @@ import (
 // Policy is an AWS style policy document.  They wrap up the following ideas:
 // - Resources: The things in a system that users would need permissions to
 // - Actions: The interactions users have with those resources
-// - Effects: The permissive effects of a policy (allow or deny)
+// - Effect: The permissive effect of a policy (allow or deny)
 // - Conditions: Additional information to take into account when evaluating a policy
-// Policies can be attached to a user or a user group
+// Policies can be attached to a user or user group.  They can also be grouped in a role
 type Policy struct {
 	Name      string      `json:"sid"`
 	Effect    string      `json:"effect"`
