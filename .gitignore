@@ -11,6 +11,9 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Ignore vendor directory.  This project uses 'dep' so you'll 
+# need to install https://github.com/golang/dep and run 'dep ensure'
+vendor/
 
 # Ignore any config files
 iamserver.yml
