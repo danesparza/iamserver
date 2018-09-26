@@ -181,3 +181,45 @@ func (store Manager) GetAllUsers(context User) ([]User, error) {
 	//	Return our data:
 	return retval, nil
 }
+
+// GetUserWithCredentials gets a user given a set of credentials
+func (store Manager) GetUserWithCredentials(name, secret string) (User, error) {
+	retUser := User{}
+	tmpUser := User{}
+
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("User", name))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &tmpUser); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return retUser, fmt.Errorf("The user was not found or the password was incorrect")
+	}
+
+	// Compare the given password with the hash
+	err = bcrypt.CompareHashAndPassword([]byte(tmpUser.SecretHash), []byte(secret))
+	if err != nil { // nil means it is a match
+		return retUser, fmt.Errorf("The user was not found or the password was incorrect")
+	}
+
+	//	If everything checks out, return the user:
+	retUser = tmpUser
+
+	//	Return what we found:
+	return retUser, nil
+}
