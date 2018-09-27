@@ -31,19 +31,6 @@ var (
 	}
 )
 
-func NewErrResourceNotFound(err error) error {
-	if err == nil {
-		err = errors.New("not found")
-	}
-
-	return errors.WithStack(&errorWithContext{
-		error:  err,
-		code:   http.StatusNotFound,
-		status: http.StatusText(http.StatusNotFound),
-		reason: "The requested resource could not be found.",
-	})
-}
-
 type errorWithContext struct {
 	code   int
 	reason string

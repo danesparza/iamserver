@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"fmt"
-
 	"github.com/danesparza/iamserver/data"
 	"github.com/danesparza/iamserver/policy"
 	"github.com/pkg/errors"
@@ -10,19 +8,19 @@ import (
 
 // Manager is an authorization manager
 type Manager struct {
-	DBManager data.Manager
+	DBManager *data.Manager
 	Matcher   matcher
 }
 
 // IsUserRequestAuthorized determines whether the given user is authorized to
 // execute the given request
-func (a *Manager) IsUserRequestAuthorized(user data.User, request *data.Request) (bool, error) {
+func (a *Manager) IsUserRequestAuthorized(request *data.Request) bool {
 	retval := false
 
 	//	First, get all policies for the user
-	pols, err := a.DBManager.GetPoliciesForUser(user, user.Name)
+	pols, err := a.DBManager.GetPoliciesForUser(data.User{Name: request.User}, request.User)
 	if err != nil {
-		return retval, fmt.Errorf("There was a problem getting policies for user: %s", err)
+		return retval
 	}
 
 	//	Next, find out if the request is authorized based on the policies
@@ -32,7 +30,7 @@ func (a *Manager) IsUserRequestAuthorized(user data.User, request *data.Request)
 		retval = true
 	}
 
-	return retval, err
+	return retval
 }
 
 // matcher gets the policy matcher (or gets the DefaultMatcher if one isn't specified)
