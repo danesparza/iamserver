@@ -199,3 +199,77 @@ func TestUser_GetAllUsers_UserExists_ReturnsAllUsers(t *testing.T) {
 	}
 
 }
+
+func TestUser_GetUserWithCredentials_ValidParams_ReturnsUser(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+	testUser1 := data.User{Name: "UnitTest1"}
+	testPassword := "testpass"
+
+	_, err = db.AddUser(contextUser, testUser1, testPassword)
+	if err != nil {
+		t.Fatalf("AddUser - Should add user without error, but got: %s", err)
+	}
+
+	//	Act
+	gotuser1, err := db.GetUserWithCredentials(testUser1.Name, testPassword)
+
+	//	Assert
+	if err != nil {
+		t.Errorf("GetUserWithCredentials - Should get user without error, but got: %s", err)
+	}
+
+	if testUser1.Name != gotuser1.Name {
+		t.Errorf("GetUserWithCredentials - expected user %s, but got %s instead", testUser1.Name, gotuser1.Name)
+	}
+
+}
+
+func TestUser_GetUserWithCredentials_InvalidParams_ReturnsError(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+	testUser1 := data.User{Name: "UnitTest1"}
+	testPassword := "testpass"
+
+	_, err = db.AddUser(contextUser, testUser1, testPassword)
+	if err != nil {
+		t.Fatalf("AddUser - Should add user without error, but got: %s", err)
+	}
+
+	//	Act
+	gotuser1, err := db.GetUserWithCredentials(testUser1.Name, "INCORRECT_PASSWORD")
+
+	//	Assert
+	if err == nil {
+		t.Errorf("GetUserWithCredentials - Should have gotten error for incorrect password, but didn't")
+	}
+
+	if testUser1.Name == gotuser1.Name {
+		t.Errorf("GetUserWithCredentials - should NOT have gotten user information back, but did")
+	}
+
+}
