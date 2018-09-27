@@ -12,8 +12,8 @@ func TestManager_DoPoliciesAllow_ValidRequest_Successful(t *testing.T) {
 
 	//	Arrange
 	mgr := &auth.Manager{}
-	pols := []data.Policy{
-		{
+	pols := map[string]data.Policy{
+		"Regular user ship access": {
 			Name:   "Regular user ship access",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -26,7 +26,7 @@ func TestManager_DoPoliciesAllow_ValidRequest_Successful(t *testing.T) {
 				"Disembark",
 			},
 		},
-		{
+		"Captain privledges": {
 			Name:   "Captain privledges",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -38,7 +38,7 @@ func TestManager_DoPoliciesAllow_ValidRequest_Successful(t *testing.T) {
 				"Curse",
 			},
 		},
-		{
+		"Secret compartment access": {
 			Name:   "Secret compartment access",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -48,7 +48,7 @@ func TestManager_DoPoliciesAllow_ValidRequest_Successful(t *testing.T) {
 				"AccessCompartments",
 			},
 		},
-		{
+		"Healthcare access": {
 			Name:   "Healthcare access",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -82,8 +82,8 @@ func TestManager_DoPoliciesAllow_InvalidRequest_ReturnsError(t *testing.T) {
 
 	//	Arrange
 	mgr := &auth.Manager{}
-	pols := []data.Policy{
-		{
+	pols := map[string]data.Policy{
+		"Regular user ship access": {
 			Name:   "Regular user ship access",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -96,7 +96,7 @@ func TestManager_DoPoliciesAllow_InvalidRequest_ReturnsError(t *testing.T) {
 				"Disembark",
 			},
 		},
-		{
+		"Captain privledges": {
 			Name:   "Captain privledges",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -108,7 +108,7 @@ func TestManager_DoPoliciesAllow_InvalidRequest_ReturnsError(t *testing.T) {
 				"Curse",
 			},
 		},
-		{
+		"Secret compartment access": {
 			Name:   "Secret compartment access",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -118,7 +118,7 @@ func TestManager_DoPoliciesAllow_InvalidRequest_ReturnsError(t *testing.T) {
 				"AccessCompartments",
 			},
 		},
-		{
+		"Healthcare access": {
 			Name:   "Healthcare access",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -152,8 +152,8 @@ func TestManager_DoPoliciesAllow_ExplicitDeny_ReturnsError(t *testing.T) {
 
 	//	Arrange
 	mgr := &auth.Manager{}
-	pols := []data.Policy{
-		{
+	pols := map[string]data.Policy{
+		"Regular user ship access": {
 			Name:   "Regular user ship access",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -166,7 +166,7 @@ func TestManager_DoPoliciesAllow_ExplicitDeny_ReturnsError(t *testing.T) {
 				"Disembark",
 			},
 		},
-		{
+		"Captain privledges": {
 			Name:   "Captain privledges",
 			Effect: policy.Allow,
 			Resources: []string{
@@ -178,17 +178,7 @@ func TestManager_DoPoliciesAllow_ExplicitDeny_ReturnsError(t *testing.T) {
 				"Curse",
 			},
 		},
-		{
-			Name:   "Secret compartment access",
-			Effect: policy.Allow,
-			Resources: []string{
-				"Serenity",
-			},
-			Actions: []string{
-				"AccessCompartments",
-			},
-		},
-		{
+		"Deny all ship access": {
 			Name:   "Deny all ship access",
 			Effect: policy.Deny, // Policy deny
 			Resources: []string{
@@ -198,7 +188,17 @@ func TestManager_DoPoliciesAllow_ExplicitDeny_ReturnsError(t *testing.T) {
 				"<.*>", // Using a regex wildcard
 			},
 		},
-		{
+		"Secret compartment access": {
+			Name:   "Secret compartment access",
+			Effect: policy.Allow,
+			Resources: []string{
+				"Serenity",
+			},
+			Actions: []string{
+				"AccessCompartments",
+			},
+		},
+		"Healthcare access": {
 			Name:   "Healthcare access",
 			Effect: policy.Allow,
 			Resources: []string{
