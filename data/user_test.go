@@ -13,7 +13,7 @@ func TestUser_AddUser_ValidUser_Successful(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()
@@ -57,7 +57,7 @@ func TestUser_AddUser_AlreadyExists_ReturnsError(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()
@@ -89,7 +89,7 @@ func TestUser_GetUser_UserDoesntExist_ReturnsError(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()
@@ -116,7 +116,7 @@ func TestUser_GetUser_UserExists_ReturnsUser(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()
@@ -159,7 +159,7 @@ func TestUser_GetAllUsers_UserExists_ReturnsAllUsers(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()
@@ -206,7 +206,7 @@ func TestUser_GetUserWithCredentials_ValidParams_ReturnsUser(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()
@@ -243,7 +243,7 @@ func TestUser_GetUserWithCredentials_InvalidParams_ReturnsError(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()

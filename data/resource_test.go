@@ -13,7 +13,7 @@ func TestResource_AddResource_ValidResource_Successful(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()
@@ -52,7 +52,7 @@ func TestResource_AddResource_AlreadyExists_ReturnsError(t *testing.T) {
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()
@@ -84,7 +84,7 @@ func TestResource_AddActionsToResource_ResourceDoesntExist_ReturnsError(t *testi
 	systemdb, tokendb := getTestFiles()
 	db, err := data.NewManager(systemdb, tokendb)
 	if err != nil {
-		t.Errorf("NewManager failed: %s", err)
+		t.Fatalf("NewManager failed: %s", err)
 	}
 	defer func() {
 		db.Close()

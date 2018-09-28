@@ -11,11 +11,23 @@ jobs:
     working_directory: /go/src/github.com/danesparza/iamserver
     steps:
       - checkout
-      - run: go get -u github.com/golang/dep/cmd/dep
+      
       - run:
-         name: get dependencies
+         name: Install 'dep' tool
+         command: go get -u github.com/golang/dep/cmd/dep
+      
+      - run:
+         name: Get dependencies
          command: dep ensure
 
-      # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d ./...
-      - run: go test -v -race ./... 
+      - run:
+         name: API tests
+         command: go test -v -race github.com/danesparza/iamserver/api
+
+      - run:
+         name: Auth tests
+         command: go test -v -race github.com/danesparza/iamserver/auth
+
+      - run:
+         name: Data tests
+         command: go test -v -race github.com/danesparza/iamserver/data
