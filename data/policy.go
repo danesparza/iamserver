@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/danesparza/iamserver/policy"
@@ -69,6 +70,12 @@ func (store Manager) AddPolicy(context User, newPolicy Policy) (Policy, error) {
 
 	//	Associated resources have to exist
 	for _, currentResource := range newPolicy.Resources {
+
+		//	If the resource name appears to be a regex...
+		if strings.ContainsAny(currentResource, "<>") {
+			continue // Just go to the next resource
+		}
+
 		err := store.systemdb.View(func(txn *badger.Txn) error {
 			_, err := txn.Get(GetKey("Resource", currentResource))
 			return err

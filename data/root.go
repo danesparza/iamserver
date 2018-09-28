@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/danesparza/badger"
+	"github.com/danesparza/iamserver/policy"
 	"github.com/rs/xid"
 )
 
@@ -64,38 +65,90 @@ func (store Manager) SystemBootstrap() (User, string, error) {
 
 	//	Create the admin user
 	adminUser, err := store.AddUser(contextUser, User{Name: "admin", Description: "System administrator"}, adminPassword)
-
 	if err != nil {
 		return adminUser, adminPassword, fmt.Errorf("Problem adding admin user: %s", err)
 	}
 
 	//	Create the Administrators group (add the admin user to the group)
 	adminGroup, err := store.AddGroup(contextUser, "Administrators", "Users who can fully administer the system")
-
 	if err != nil {
 		return adminUser, adminPassword, fmt.Errorf("Problem creating the Administrators group: %s", err)
 	}
 
 	_, err = store.AddUsersToGroup(contextUser, adminGroup.Name, adminUser.Name)
-
 	if err != nil {
 		return adminUser, adminPassword, fmt.Errorf("Problem adding the admin user to the Administrators group: %s", err)
 	}
 
+	//	Create the system resource
+	_, err = store.AddResource(contextUser, "System", "The system resource")
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem creating the system resource: %s", err)
+	}
+
+	//	Add system actions
+	store.AddActionToResource(contextUser, "System",
+		"CreateUser",
+		"EditUser",
+		"GetUser",
+		"ListUsers",
+		"CreateGroup",
+		"EditGroup",
+		"GetGroup",
+		"ListGroups",
+		"CreatePolicy",
+		"EditPolicy",
+		"GetPolicy",
+		"ListPolicies",
+		"CreateRole",
+		"EditRole",
+		"GetRole",
+		"ListRoles",
+		"CreateResource",
+		"EditResource",
+		"GetResource",
+		"ListResources",
+		"CreateAction",
+		"EditAction",
+	)
+
+	//	Create the initial system policies
+	adminEverything := Policy{
+		Name:   "Administer everything",
+		Effect: policy.Allow,
+		Resources: []string{
+			"<.*>", // All resources
+		},
+		Actions: []string{
+			"<.*>", // All actions
+		},
+	}
+	_, err = store.AddPolicy(contextUser, adminEverything)
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem creating the 'administer everything' policy: %s", err)
+	}
+
+	//	Create the sys_admin role (and add some of the system policies to that role)
+	sysAdmin, err := store.AddRole(contextUser, "sys_admin", "System administrator role")
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem creating the 'sys_admin' role: %s", err)
+	}
+	_, err = store.AttachPoliciesToRole(contextUser, sysAdmin.Name, adminEverything.Name)
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem adding policies to the 'sys_admin' role: %s", err)
+	}
+
+	//	Attach the sys_admin role to the Administrators group
+	_, err = store.AttachRoleToGroups(contextUser, sysAdmin.Name, adminGroup.Name)
+	if err != nil {
+		return adminUser, adminPassword, fmt.Errorf("Problem attaching 'sys_admin' role to the 'Administrators' group: %s", err)
+	}
+
 	//	Get the updated admin user:
 	adminUser, err = store.GetUser(contextUser, adminUser.Name)
-
 	if err != nil {
 		return adminUser, adminPassword, fmt.Errorf("Problem getting the updated admin user: %s", err)
 	}
-
-	//	Create the system resource
-
-	//	Create the initial system policies
-
-	//	Create the System_Admin role (and add some of the system policies to that role)
-
-	//	Attach the System_Admin role to the Administrators group
 
 	//	Return everything:
 	return adminUser, adminPassword, nil
