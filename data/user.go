@@ -31,15 +31,15 @@ type User struct {
 	Roles       []string    `json:"roles"`
 }
 
-var (
-	// SystemUser represents the system user
-	SystemUser = User{Name: "System"}
-)
-
 // AddUser adds a user to the system
 func (store Manager) AddUser(context User, user User, userPassword string) (User, error) {
 	//	Our return item
 	retval := User{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAddUser) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	//	First -- does the user exist already?
 	err := store.systemdb.View(func(txn *badger.Txn) error {
@@ -104,6 +104,11 @@ func (store Manager) GetUser(context User, userName string) (User, error) {
 	//	Our return item
 	retval := User{}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetUser) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(GetKey("User", userName))
 		if err != nil {
@@ -137,6 +142,11 @@ func (store Manager) GetUser(context User, userName string) (User, error) {
 func (store Manager) GetAllUsers(context User) ([]User, error) {
 	//	Our return item
 	retval := []User{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetAllUsers) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 

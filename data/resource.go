@@ -32,6 +32,11 @@ func (store Manager) AddResource(context User, name, description string) (Resour
 	retval := Resource{}
 	newResource := Resource{Name: name, Description: description}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAddResource) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	//	First -- does the resource exist already?
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 		_, err := txn.Get(GetKey("Resource", newResource.Name))
@@ -78,6 +83,11 @@ func (store Manager) GetResource(context User, resourceName string) (Resource, e
 	//	Our return item
 	retval := Resource{}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetResource) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(GetKey("Resource", resourceName))
 		if err != nil {
@@ -111,6 +121,11 @@ func (store Manager) GetResource(context User, resourceName string) (Resource, e
 func (store Manager) GetAllResources(context User) ([]Resource, error) {
 	//	Our return item
 	retval := []Resource{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetAllResources) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 
@@ -165,6 +180,11 @@ func (store Manager) GetAllResources(context User) ([]Resource, error) {
 func (store Manager) AddActionToResource(context User, resourceName string, actions ...string) (Resource, error) {
 	//	Our return item
 	retval := Resource{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAddActionToResource) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	//	First -- validate that the resource exists
 	err := store.systemdb.View(func(txn *badger.Txn) error {

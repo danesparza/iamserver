@@ -16,6 +16,33 @@ type Manager struct {
 	Matcher  matcher
 }
 
+var (
+	// SystemUser represents the system user
+	SystemUser = User{Name: "System"}
+
+	sysreqAddUser              = &Request{"System", "AddUser"}
+	sysreqGetUser              = &Request{"System", "GetUser"}
+	sysreqGetAllUsers          = &Request{"System", "GetAllUsers"}
+	sysreqAddGroup             = &Request{"System", "AddGroup"}
+	sysreqGetGroup             = &Request{"System", "GetGroup"}
+	sysreqGetAllGroups         = &Request{"System", "GetAllGroups"}
+	sysreqAddUsersToGroup      = &Request{"System", "AddUsersToGroup"}
+	sysreqAddResource          = &Request{"System", "AddResource"}
+	sysreqGetResource          = &Request{"System", "GetResource"}
+	sysreqGetAllResources      = &Request{"System", "GetAllResources"}
+	sysreqAddActionToResource  = &Request{"System", "AddActionToResource"}
+	sysreqAddRole              = &Request{"System", "AddRole"}
+	sysreqGetRole              = &Request{"System", "GetRole"}
+	sysreqGetAllRoles          = &Request{"System", "GetAllRoles"}
+	sysreqAttachPoliciesToRole = &Request{"System", "AttachPoliciesToRole"}
+	sysreqAttachRoleToUsers    = &Request{"System", "AttachRoleToUsers"}
+	sysreqAttachRoleToGroups   = &Request{"System", "AttachRoleToGroups"}
+	sysreqAddPolicy            = &Request{"System", "AddPolicy"}
+	sysreqAttachPolicyToUsers  = &Request{"System", "AttachPolicyToUsers"}
+	sysreqAttachPolicyToGroups = &Request{"System", "AttachPolicyToGroups"}
+	sysreqGetPoliciesForUser   = &Request{"System", "GetPoliciesForUser"}
+)
+
 // NewManager creates a new instance of a Manager and returns it
 func NewManager(systemdbpath, tokendbpath string) (*Manager, error) {
 	retval := new(Manager)
@@ -89,7 +116,7 @@ func (store Manager) SystemBootstrap() (User, string, error) {
 
 	//	Add system actions
 	store.AddActionToResource(contextUser, "System",
-		"CreateUser",
+		sysreqAddUser.Action,
 		"EditUser",
 		"GetUser",
 		"ListUsers",

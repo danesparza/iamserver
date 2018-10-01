@@ -42,6 +42,11 @@ func (store Manager) AddPolicy(context User, newPolicy Policy) (Policy, error) {
 	//	Our return item
 	retval := Policy{}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAddPolicy) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	//	First -- does the policy exist already?
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 		_, err := txn.Get(GetKey("Policy", newPolicy.Name))
@@ -131,6 +136,11 @@ func (store Manager) AttachPolicyToUsers(context User, policyName string, users 
 	//	Our return item
 	retval := Policy{}
 	affectedUsers := []User{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAttachPolicyToUsers) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	//	First -- validate that the policy exists
 	err := store.systemdb.View(func(txn *badger.Txn) error {
@@ -261,6 +271,11 @@ func (store Manager) AttachPolicyToGroups(context User, policyName string, group
 	//	Our return item
 	retval := Policy{}
 	affectedGroups := []Group{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAttachPolicyToGroups) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	//	First -- validate that the policy exists
 	err := store.systemdb.View(func(txn *badger.Txn) error {

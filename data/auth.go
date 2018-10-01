@@ -10,7 +10,10 @@ import (
 func (store Manager) IsUserRequestAuthorized(user User, request *Request) bool {
 	retval := false
 
-	//	If using the system user, the request is allowed:
+	//	If using the special system user, the request is allowed:
+	if user.Name == SystemUser.Name && user.Created.IsZero() {
+		return true
+	}
 
 	//	First, get all policies for the user
 	pols, err := store.GetPoliciesForUser(user, user.Name)

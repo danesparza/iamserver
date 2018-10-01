@@ -33,6 +33,11 @@ func (store Manager) AddRole(context User, roleName string, roleDescription stri
 	//	Our return item
 	retval := Role{}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAddRole) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	//	Our new role:
 	role := Role{
 		Name:        roleName,
@@ -83,6 +88,11 @@ func (store Manager) GetRole(context User, roleName string) (Role, error) {
 	//	Our return item
 	retval := Role{}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetRole) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(GetKey("Role", roleName))
 		if err != nil {
@@ -116,6 +126,11 @@ func (store Manager) GetRole(context User, roleName string) (Role, error) {
 func (store Manager) GetAllRoles(context User) ([]Role, error) {
 	//	Our return item
 	retval := []Role{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetAllRoles) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 
@@ -172,6 +187,11 @@ func (store Manager) AttachPoliciesToRole(context User, roleName string, policie
 	//	Our return item
 	retval := Role{}
 	affectedPolicies := []Policy{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAttachPoliciesToRole) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	//	First -- validate that the role exists
 	err := store.systemdb.View(func(txn *badger.Txn) error {
@@ -303,6 +323,11 @@ func (store Manager) AttachRoleToUsers(context User, roleName string, users ...s
 	retval := Role{}
 	affectedUsers := []User{}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAttachRoleToUsers) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	//	First -- validate that the role exists
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(GetKey("Role", roleName))
@@ -432,6 +457,11 @@ func (store Manager) AttachRoleToGroups(context User, roleName string, groups ..
 	//	Our return item
 	retval := Role{}
 	affectedGroups := []Group{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAttachRoleToGroups) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	//	First -- validate that the role exists
 	err := store.systemdb.View(func(txn *badger.Txn) error {

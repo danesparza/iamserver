@@ -32,6 +32,11 @@ func (store Manager) AddGroup(context User, groupName string, groupDescription s
 	//	Our return item
 	retval := Group{}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAddGroup) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	//	Our new group:
 	group := Group{
 		Name:        groupName,
@@ -82,6 +87,11 @@ func (store Manager) GetGroup(context User, groupName string) (Group, error) {
 	//	Our return item
 	retval := Group{}
 
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetGroup) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(GetKey("Group", groupName))
 		if err != nil {
@@ -115,6 +125,11 @@ func (store Manager) GetGroup(context User, groupName string) (Group, error) {
 func (store Manager) GetAllGroups(context User) ([]Group, error) {
 	//	Our return item
 	retval := []Group{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetAllGroups) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 
@@ -171,6 +186,11 @@ func (store Manager) AddUsersToGroup(context User, groupName string, users ...st
 	//	Our return item
 	retval := Group{}
 	affectedUsers := []User{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqAddUsersToGroup) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
 
 	//	First -- validate that the group exists
 	err := store.systemdb.View(func(txn *badger.Txn) error {
