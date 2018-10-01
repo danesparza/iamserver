@@ -25,9 +25,5 @@ jobs:
          command: go test -v -race github.com/danesparza/iamserver/api
 
       - run:
-         name: Auth tests
-         command: go test -v -race github.com/danesparza/iamserver/auth
-
-      - run:
          name: Data tests
          command: go test -v -race github.com/danesparza/iamserver/data

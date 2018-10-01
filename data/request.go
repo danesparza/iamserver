@@ -4,5 +4,4 @@ package data
 type Request struct {
 	Resource string
 	Action   string
-	User     string
 }

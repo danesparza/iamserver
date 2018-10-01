@@ -1,11 +1,10 @@
-package auth
+package data
 
 import (
 	"regexp"
 	"strings"
 
 	"github.com/danesparza/iamserver/compiler"
-	"github.com/danesparza/iamserver/data"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 )
@@ -50,7 +49,7 @@ func (m *RegexpMatcher) set(pattern string, reg *regexp.Regexp) {
 }
 
 // Matches a needle with an array of regular expressions and returns true if a match was found.
-func (m *RegexpMatcher) Matches(p data.Policy, haystack []string, needle string) (bool, error) {
+func (m *RegexpMatcher) Matches(p Policy, haystack []string, needle string) (bool, error) {
 	var reg *regexp.Regexp
 	var err error
 	for _, h := range haystack {

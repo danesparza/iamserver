@@ -1,11 +1,10 @@
-package auth_test
+package data_test
 
 import (
 	"os"
 	"testing"
 	"time"
 
-	"github.com/danesparza/iamserver/auth"
 	"github.com/danesparza/iamserver/data"
 	"github.com/danesparza/iamserver/policy"
 )
@@ -13,7 +12,7 @@ import (
 func TestManager_DoPoliciesAllow_ValidRequest_Successful(t *testing.T) {
 
 	//	Arrange
-	mgr := &auth.Manager{}
+	mgr := &data.Manager{}
 	pols := map[string]data.Policy{
 		"Regular user ship access": {
 			Name:   "Regular user ship access",
@@ -67,7 +66,6 @@ func TestManager_DoPoliciesAllow_ValidRequest_Successful(t *testing.T) {
 	req := &data.Request{
 		Action:   "Embark",
 		Resource: "Serenity",
-		User:     "malreynolds",
 	}
 
 	//	Act
@@ -83,7 +81,7 @@ func TestManager_DoPoliciesAllow_ValidRequest_Successful(t *testing.T) {
 func TestManager_DoPoliciesAllow_InvalidRequest_ReturnsError(t *testing.T) {
 
 	//	Arrange
-	mgr := &auth.Manager{}
+	mgr := &data.Manager{}
 	pols := map[string]data.Policy{
 		"Regular user ship access": {
 			Name:   "Regular user ship access",
@@ -137,7 +135,6 @@ func TestManager_DoPoliciesAllow_InvalidRequest_ReturnsError(t *testing.T) {
 	req := &data.Request{
 		Action:   "Fire",
 		Resource: "Serenity",
-		User:     "malreynolds",
 	}
 
 	//	Act
@@ -153,7 +150,7 @@ func TestManager_DoPoliciesAllow_InvalidRequest_ReturnsError(t *testing.T) {
 func TestManager_DoPoliciesAllow_ExplicitDeny_ReturnsError(t *testing.T) {
 
 	//	Arrange
-	mgr := &auth.Manager{}
+	mgr := &data.Manager{}
 	pols := map[string]data.Policy{
 		"Regular user ship access": {
 			Name:   "Regular user ship access",
@@ -219,14 +216,12 @@ func TestManager_DoPoliciesAllow_ExplicitDeny_ReturnsError(t *testing.T) {
 		&data.Request{
 			Action:   "Open",
 			Resource: "Serenity",
-			User:     "malreynolds",
 		}, pols)
 
 	err2 := mgr.DoPoliciesAllow(
 		&data.Request{
 			Action:   "PresentHMOcard",
 			Resource: "Healthcare",
-			User:     "malreynolds",
 		}, pols)
 
 	//	Assert
@@ -253,9 +248,7 @@ func TestManager_IsUserRequestAuthorized_AuthorizedRequest_ReturnsTrue(t *testin
 		os.RemoveAll(tokendb)
 	}()
 
-	authMgr := auth.Manager{DBManager: db}
-
-	contextUser := data.User{Name: "System"}
+	contextUser := data.SystemUser
 
 	//	The rules we want to setup and validate (based shamelessly on Firefly):
 	//	The users have 'access the ship' role (which has 'regular user ship access' policy)
@@ -389,7 +382,6 @@ func TestManager_IsUserRequestAuthorized_AuthorizedRequest_ReturnsTrue(t *testin
 
 	//	-- Create a request
 	request := data.Request{
-		User:     "malreynolds",
 		Resource: "Serenity",
 		Action:   "Fly",
 	}
@@ -397,7 +389,7 @@ func TestManager_IsUserRequestAuthorized_AuthorizedRequest_ReturnsTrue(t *testin
 	start := time.Now() // Starting the stopwatch
 
 	//	ACT
-	isAuthorized := authMgr.IsUserRequestAuthorized(&request)
+	isAuthorized := db.IsUserRequestAuthorized(data.User{Name: "malreynolds"}, &request)
 
 	stop := time.Now()                                            // Stopping the stopwatch
 	elapsed := stop.Sub(start)                                    // Figuring out the time elapsed
@@ -423,9 +415,7 @@ func TestManager_IsUserRequestAuthorized_NotAuthorized_ReturnsFalse(t *testing.T
 		os.RemoveAll(tokendb)
 	}()
 
-	authMgr := auth.Manager{DBManager: db}
-
-	contextUser := data.User{Name: "System"}
+	contextUser := data.SystemUser
 
 	//	The rules we want to setup and validate (based shamelessly on Firefly):
 	//	The users have 'access the ship' role (which has 'regular user ship access' policy)
@@ -559,7 +549,6 @@ func TestManager_IsUserRequestAuthorized_NotAuthorized_ReturnsFalse(t *testing.T
 
 	//	-- Create a request
 	request := data.Request{
-		User:     "malreynolds",
 		Resource: "Serenity",
 		Action:   "Kiss_a_reaver",
 	}
@@ -567,7 +556,7 @@ func TestManager_IsUserRequestAuthorized_NotAuthorized_ReturnsFalse(t *testing.T
 	start := time.Now() // Starting the stopwatch
 
 	//	ACT
-	isAuthorized := authMgr.IsUserRequestAuthorized(&request)
+	isAuthorized := db.IsUserRequestAuthorized(data.User{Name: "malreynolds"}, &request)
 
 	stop := time.Now()                                            // Stopping the stopwatch
 	elapsed := stop.Sub(start)                                    // Figuring out the time elapsed

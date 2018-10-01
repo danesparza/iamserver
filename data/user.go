@@ -31,6 +31,11 @@ type User struct {
 	Roles       []string    `json:"roles"`
 }
 
+var (
+	// SystemUser represents the system user
+	SystemUser = User{Name: "System"}
+)
+
 // AddUser adds a user to the system
 func (store Manager) AddUser(context User, user User, userPassword string) (User, error) {
 	//	Our return item

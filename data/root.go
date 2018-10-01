@@ -13,6 +13,7 @@ import (
 type Manager struct {
 	systemdb *badger.DB
 	tokendb  *badger.DB
+	Matcher  matcher
 }
 
 // NewManager creates a new instance of a Manager and returns it
@@ -160,4 +161,10 @@ func GetKey(entityType string, keyPart ...string) []byte {
 	allparts = append(allparts, entityType)
 	allparts = append(allparts, keyPart...)
 	return []byte(strings.Join(allparts, "_"))
+}
+
+// IsUserAuthorized validates the request
+func (store Manager) IsUserAuthorized(user User, request Request) bool {
+
+	return true
 }
