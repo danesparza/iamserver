@@ -53,15 +53,15 @@ func start(cmd *cobra.Command, args []string) {
 	// apiService := api.Service{DB: db}
 
 	//	Create a router and setup our REST endpoints...
-	SystemRouter := mux.NewRouter()
-	OAuthRouter := mux.NewRouter()
+	UIRouter := mux.NewRouter()
+	ApiRouter := mux.NewRouter()
 
 	//	Setup our UI routes
-	SystemRouter.HandleFunc("/", api.ShowUI)
+	UIRouter.HandleFunc("/", api.ShowUI)
 
 	//	Setup our Service routes
-	OAuthRouter.HandleFunc("/oauth/token/client", api.HelloWorld).Methods("POST")
-	OAuthRouter.HandleFunc("/oauth/authorize", api.HelloWorld).Methods("GET")
+	ApiRouter.HandleFunc("/oauth/token/client", api.HelloWorld).Methods("POST")
+	ApiRouter.HandleFunc("/oauth/authorize", api.HelloWorld).Methods("GET")
 
 	//	Setup the CORS options:
 	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))
@@ -69,7 +69,7 @@ func start(cmd *cobra.Command, args []string) {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   strings.Split(viper.GetString("apiservice.allowed-origins"), ","),
 		AllowCredentials: true,
-	}).Handler(OAuthRouter)
+	}).Handler(ApiRouter)
 
 	//	Format the bound interface:
 	formattedAPIInterface := viper.GetString("apiservice.bind")
@@ -99,7 +99,7 @@ func start(cmd *cobra.Command, args []string) {
 	go func() {
 		defer wg.Done()
 		log.Printf("[INFO] Starting UI service: https://%s:%s\n", formattedUIInterface, viper.GetString("uiservice.port"))
-		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("uiservice.bind")+":"+viper.GetString("uiservice.port"), viper.GetString("uiservice.tlscert"), viper.GetString("uiservice.tlskey"), SystemRouter))
+		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("uiservice.bind")+":"+viper.GetString("uiservice.port"), viper.GetString("uiservice.tlscert"), viper.GetString("uiservice.tlskey"), UIRouter))
 	}()
 
 	//	Wait for everything to stop...
