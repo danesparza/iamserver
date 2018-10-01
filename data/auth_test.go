@@ -568,3 +568,62 @@ func TestManager_IsUserRequestAuthorized_NotAuthorized_ReturnsFalse(t *testing.T
 	}
 
 }
+
+func TestManager_IsUserRequestAuthorized_SystemAction_NotAuthorized_ReturnsFalse(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Fatalf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "BogusUser"}
+
+	//	Act
+	_, err = db.AddUser(contextUser, data.User{Name: "malreynolds"}, "lassiter")
+
+	//	Assert
+	if err == nil {
+		t.Errorf("AddUser - Should return error for bogus user, but didn't")
+	}
+
+}
+
+func TestManager_IsUserRequestAuthorized_SystemAction_AuthorizedUser_ReturnsTrue(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Fatalf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	//	Act
+	adminUser, _, err := db.SystemBootstrap()
+
+	//	Assert
+	if err != nil {
+		t.Errorf("SystemBootstrap - Should bootstrap without error, but got: %s", err)
+	}
+
+	//	Attempt to create a a user with the admin credentials.  It should create one without a problem:
+	newUser1, err := db.AddUser(adminUser, data.User{Name: "UnitTestUser1"}, "sometestpassword")
+
+	if err != nil {
+		t.Errorf("AddUser - Admin credentials should add user without error, but got: %s", err)
+	}
+
+	t.Logf("New unit test user: %+v", newUser1)
+
+}
