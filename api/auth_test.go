@@ -30,13 +30,13 @@ func TestAuthHeaderValid_InValidHeader_ReturnsFalse(t *testing.T) {
 	}
 }
 
-func TestGetTokenFromAuthHeader_ValidBearerToken_ReturnsToken(t *testing.T) {
+func TestGetBearerTokenFromAuthHeader_ValidBearerToken_ReturnsToken(t *testing.T) {
 	//	Arrange
 	authHeader := "Bearer YmR1cW82cWQycG0zbTA1dXVoc2c="
 	decodedToken := "bduqo6qd2pm3m05uuhsg"
 
 	//	Act
-	retval := getTokenFromAuthHeader(authHeader)
+	retval := getBearerTokenFromAuthHeader(authHeader)
 
 	//	Assert
 	if retval != decodedToken {
