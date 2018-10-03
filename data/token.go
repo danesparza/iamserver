@@ -63,3 +63,99 @@ func (store Manager) GetNewToken(user User, expiresafter time.Duration) (Token, 
 	//	Return the token
 	return retval, nil
 }
+
+// GetTokenInfo returns token information for a given unexpired tokenID (or an error if it can't be found)
+func (store Manager) GetTokenInfo(tokenID string) (Token, error) {
+
+	retval := Token{}
+
+	//	Get the token:
+	err := store.tokendb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("Token", tokenID))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return retval, fmt.Errorf("Token %s doesn't exist", tokenID)
+	}
+
+	//	Return the token
+	return retval, nil
+}
+
+// GetUserForToken returns user information for a given unexpired tokenID (or an error if token or user can't be found)
+func (store Manager) GetUserForToken(tokenID string) (User, error) {
+
+	retval := User{}
+	token := Token{}
+
+	//	First, see if we can get the token...
+	err := store.tokendb.View(func(txn *badger.Txn) error {
+
+		item, err := txn.Get(GetKey("Token", tokenID))
+		if err != nil {
+			return fmt.Errorf("Token doesn't exist: %s", tokenID)
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &token); err != nil {
+				return fmt.Errorf("Problem deserializing token %s: %s", tokenID, err)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return retval, err
+	}
+
+	//	Next, see if we can get the user...
+	err = store.systemdb.View(func(txn *badger.Txn) error {
+
+		item, err := txn.Get(GetKey("User", token.User))
+		if err != nil {
+			return fmt.Errorf("User doesn't exist: %s", token.User)
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return fmt.Errorf("Problem deserializing user %s: %s", token.User, err)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return retval, err
+	}
+
+	//	Return the user
+	return retval, nil
+}
