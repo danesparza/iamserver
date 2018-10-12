@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/danesparza/iamserver/data"
 )
 
 // TokenResponse is a response for a bearer token
@@ -15,6 +17,11 @@ type TokenResponse struct {
 	TokenType   string `json:"token_type"`
 	ExpiresIn   string `json:"expires_in"`
 	AccessToken string `json:"access_token"`
+}
+
+// AuthResponse is a response structure returned after validating a request
+type AuthResponse struct {
+	Authorized bool `json:"authorized"`
 }
 
 // GetTokenForCredentials gets a bearer token for a given set of credentials
@@ -51,6 +58,52 @@ func (service Service) GetTokenForCredentials(rw http.ResponseWriter, req *http.
 		TokenType:   "Bearer",
 		ExpiresIn:   strconv.FormatFloat(token.Expires.Sub(time.Now()).Seconds(), 'f', 0, 64),
 		AccessToken: encodedToken,
+	}
+
+	//	Serialize to JSON & return the response:
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(rw).Encode(response)
+}
+
+// IsRequestAuthorized returns whether a request is authorized for a given bearer token and request object
+func (service Service) IsRequestAuthorized(rw http.ResponseWriter, req *http.Request) {
+
+	//	req.Body is a ReadCloser -- we need to remember to close it:
+	defer req.Body.Close()
+
+	//	Get the authorization header:
+	authHeader := req.Header.Get("Authorization")
+
+	//	If the auth header wasn't supplied, return an error
+	if authHeaderValid(authHeader) != true {
+		sendErrorResponse(rw, fmt.Errorf("Bearer token was not supplied"), http.StatusForbidden)
+		return
+	}
+
+	//	Get just the bearer token itself:
+	token := getBearerTokenFromAuthHeader(authHeader)
+
+	//	Get the user from the token:
+	user, err := service.DB.GetUserForToken(token)
+	if err != nil {
+		sendErrorResponse(rw, fmt.Errorf("Token not authorized or not valid"), http.StatusUnauthorized)
+		return
+	}
+
+	//	Parse the request JSON
+	request := data.Request{}
+	err = json.NewDecoder(req.Body).Decode(&request)
+	if err != nil {
+		sendErrorResponse(rw, err, http.StatusBadRequest)
+		return
+	}
+
+	//	See if the request is valid
+	authorized := service.DB.IsUserRequestAuthorized(user, &request)
+
+	//	Create our response and send information back:
+	response := AuthResponse{
+		Authorized: authorized,
 	}
 
 	//	Serialize to JSON & return the response:

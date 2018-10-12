@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
-	"sync"
+	"syscall"
 
 	"github.com/danesparza/iamserver/api"
 	"github.com/danesparza/iamserver/data"
@@ -43,6 +46,13 @@ var startCmd = &cobra.Command{
 
 func start(cmd *cobra.Command, args []string) {
 
+	//	Create our 'sigs' and 'done' channels
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	//	Indicate what signals we're waiting for:
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+
 	//	Create a DBManager object and associate with the api.Service
 	db, err := data.NewManager(viper.GetString("datastore.system"), viper.GetString("datastore.tokens"))
 	if err != nil {
@@ -60,8 +70,8 @@ func start(cmd *cobra.Command, args []string) {
 	UIRouter.HandleFunc("/", api.ShowUI)
 
 	//	Setup our Service routes
-	APIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("POST")
-	APIRouter.HandleFunc("/auth/authorize", api.HelloWorld).Methods("POST")
+	APIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("GET")
+	APIRouter.HandleFunc("/auth/authorize", apiService.IsRequestAuthorized).Methods("POST")
 	APIRouter.HandleFunc("/oauth/token/client", api.HelloWorld).Methods("POST")
 	APIRouter.HandleFunc("/oauth/authorize", api.HelloWorld).Methods("GET")
 
@@ -90,23 +100,25 @@ func start(cmd *cobra.Command, args []string) {
 	log.Printf("[INFO] UI TLS cert: %s\n", viper.GetString("uiservice.tlscert"))
 	log.Printf("[INFO] UI TLS key: %s\n", viper.GetString("uiservice.tlskey"))
 
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
+	}()
+
+	go func() {
 		log.Printf("[INFO] Starting API service: https://%s:%s\n", formattedAPIInterface, viper.GetString("apiservice.port"))
 		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("apiservice.bind")+":"+viper.GetString("apiservice.port"), viper.GetString("apiservice.tlscert"), viper.GetString("apiservice.tlskey"), corsHandler))
 	}()
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
 		log.Printf("[INFO] Starting UI service: https://%s:%s\n", formattedUIInterface, viper.GetString("uiservice.port"))
 		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("uiservice.bind")+":"+viper.GetString("uiservice.port"), viper.GetString("uiservice.tlscert"), viper.GetString("uiservice.tlskey"), UIRouter))
 	}()
 
-	//	Wait for everything to stop...
-	wg.Wait()
-
+	//	Wait for our signal
+	<-done
+	fmt.Println("Shutting down ...")
 }
 
 func init() {
