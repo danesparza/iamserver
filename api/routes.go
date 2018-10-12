@@ -26,7 +26,7 @@ func sendErrorResponse(rw http.ResponseWriter, err error, code int) {
 		Message: "Error: " + err.Error()}
 
 	//	Serialize to JSON & return the response:
-	rw.WriteHeader(code)
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	rw.WriteHeader(code)
 	json.NewEncoder(rw).Encode(response)
 }

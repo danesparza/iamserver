@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -69,11 +68,17 @@ func start(cmd *cobra.Command, args []string) {
 	//	Setup our UI routes
 	UIRouter.HandleFunc("/", api.ShowUI)
 
-	//	Setup our Service routes
+	//	SERVICE ROUTES
+	//	-- Auth
 	APIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("GET")
 	APIRouter.HandleFunc("/auth/authorize", apiService.IsRequestAuthorized).Methods("POST")
+	//	-- OAuth
 	APIRouter.HandleFunc("/oauth/token/client", api.HelloWorld).Methods("POST")
 	APIRouter.HandleFunc("/oauth/authorize", api.HelloWorld).Methods("GET")
+	//	-- User
+	APIRouter.HandleFunc("/system/user", apiService.AddUser).Methods("PUT")
+	//	-- Group
+	APIRouter.HandleFunc("/system/group", apiService.AddGroup).Methods("PUT")
 
 	//	Setup the CORS options:
 	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))
@@ -100,13 +105,16 @@ func start(cmd *cobra.Command, args []string) {
 	log.Printf("[INFO] UI TLS cert: %s\n", viper.GetString("uiservice.tlscert"))
 	log.Printf("[INFO] UI TLS key: %s\n", viper.GetString("uiservice.tlskey"))
 
+	//	Start our shutdown listener (for graceful shutdowns)
 	go func() {
-		sig := <-sigs
-		fmt.Println()
-		fmt.Println(sig)
+		//	If we get a signal...
+		_ = <-sigs
+
+		//	Indicate we're done...
 		done <- true
 	}()
 
+	//	Start the API and UI services
 	go func() {
 		log.Printf("[INFO] Starting API service: https://%s:%s\n", formattedAPIInterface, viper.GetString("apiservice.port"))
 		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("apiservice.bind")+":"+viper.GetString("apiservice.port"), viper.GetString("apiservice.tlscert"), viper.GetString("apiservice.tlskey"), corsHandler))
@@ -116,9 +124,9 @@ func start(cmd *cobra.Command, args []string) {
 		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("uiservice.bind")+":"+viper.GetString("uiservice.port"), viper.GetString("uiservice.tlscert"), viper.GetString("uiservice.tlskey"), UIRouter))
 	}()
 
-	//	Wait for our signal
+	//	Wait for our signal and shutdown gracefully
 	<-done
-	fmt.Println("Shutting down ...")
+	log.Printf("[INFO] Shutting down ...")
 }
 
 func init() {
