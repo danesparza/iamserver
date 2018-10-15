@@ -70,15 +70,19 @@ func start(cmd *cobra.Command, args []string) {
 
 	//	SERVICE ROUTES
 	//	-- Auth
-	APIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("GET")
-	APIRouter.HandleFunc("/auth/authorize", apiService.IsRequestAuthorized).Methods("POST")
+	APIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("GET")   // Get a token (from credentials)
+	APIRouter.HandleFunc("/auth/authorize", apiService.IsRequestAuthorized).Methods("POST") // Validate a request for a given token
 	//	-- OAuth
 	APIRouter.HandleFunc("/oauth/token/client", api.HelloWorld).Methods("POST")
 	APIRouter.HandleFunc("/oauth/authorize", api.HelloWorld).Methods("GET")
 	//	-- User
-	APIRouter.HandleFunc("/system/user", apiService.AddUser).Methods("PUT")
+	APIRouter.HandleFunc("/system/user", apiService.AddUser).Methods("PUT")            // Add a user
+	APIRouter.HandleFunc("/system/user/{username}", apiService.GetUser).Methods("GET") // Get a user
+	APIRouter.HandleFunc("/system/users", apiService.GetAllUsers).Methods("GET")       // Get all users
 	//	-- Group
-	APIRouter.HandleFunc("/system/group", apiService.AddGroup).Methods("PUT")
+	APIRouter.HandleFunc("/system/group", apiService.AddGroup).Methods("PUT")             // Add a group
+	APIRouter.HandleFunc("/system/group/{groupname}", apiService.GetGroup).Methods("GET") // Get a group
+	APIRouter.HandleFunc("/system/groups", apiService.GetAllGroups).Methods("GET")        // Get all groups
 
 	//	Setup the CORS options:
 	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))
