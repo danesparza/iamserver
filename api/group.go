@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/danesparza/iamserver/data"
 	"github.com/gorilla/mux"
@@ -144,6 +145,57 @@ func (service Service) GetAllGroups(rw http.ResponseWriter, req *http.Request) {
 	response := SystemResponse{
 		Status:  http.StatusOK,
 		Message: "All groups fetched",
+		Data:    dataResponse,
+	}
+
+	//	Serialize to JSON & return the response:
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(rw).Encode(response)
+}
+
+// AddUsersToGroup adds user(s) to a group.  If the bearer token is not authorized for the operation, StatusUnauthorized is returned
+func (service Service) AddUsersToGroup(rw http.ResponseWriter, req *http.Request) {
+
+	//	req.Body is a ReadCloser -- we need to remember to close it:
+	defer req.Body.Close()
+
+	//	Get the authorization header:
+	authHeader := req.Header.Get("Authorization")
+
+	//	If the auth header wasn't supplied, return an error
+	if authHeaderValid(authHeader) != true {
+		sendErrorResponse(rw, fmt.Errorf("Bearer token was not supplied"), http.StatusForbidden)
+		return
+	}
+
+	//	Get just the bearer token itself:
+	token := getBearerTokenFromAuthHeader(authHeader)
+
+	//	Get the user from the token:
+	user, err := service.DB.GetUserForToken(token)
+	if err != nil {
+		sendErrorResponse(rw, fmt.Errorf("Token not authorized or not valid"), http.StatusUnauthorized)
+		return
+	}
+
+	//	Parse the request
+	vars := mux.Vars(req)
+
+	//	Get our list of users:
+	users := vars["userlist"]
+	userList := strings.Split(users, ",")
+
+	//	Perform the action with the context user
+	dataResponse, err := service.DB.AddUsersToGroup(user, vars["groupname"], userList...)
+	if err != nil {
+		sendErrorResponse(rw, err, http.StatusUnauthorized)
+		return
+	}
+
+	//	Create our response and send information back:
+	response := SystemResponse{
+		Status:  http.StatusOK,
+		Message: "Added user(s) to group",
 		Data:    dataResponse,
 	}
 
