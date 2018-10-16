@@ -65,7 +65,7 @@ func start(cmd *cobra.Command, args []string) {
 	UIRouter := mux.NewRouter()
 	APIRouter := mux.NewRouter()
 
-	//	Setup our UI routes
+	//	UI ROUTES
 	UIRouter.HandleFunc("/", api.ShowUI)
 
 	//	SERVICE ROUTES
@@ -85,10 +85,12 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/system/group/{groupname}/addusers/{userlist}", apiService.AddUsersToGroup).Methods("PUT") // Add users to a group
 	APIRouter.HandleFunc("/system/groups", apiService.GetAllGroups).Methods("GET")                                   // Get all groups
 	//	-- Resource
-	APIRouter.HandleFunc("/system/resource", apiService.AddResource).Methods("PUT")                                            // Add a resource
-	APIRouter.HandleFunc("/system/resource/{resourcename}", apiService.GetResource).Methods("GET")                             // Get a resource
-	APIRouter.HandleFunc("/system/resource/{resourcename}/addactions/{actionlist}", apiService.AddUsersToGroup).Methods("PUT") // Add actions to a resource
-	APIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")                                       // Get all resources
+	APIRouter.HandleFunc("/system/resource", apiService.AddResource).Methods("PUT")                                                 // Add a resource
+	APIRouter.HandleFunc("/system/resource/{resourcename}", apiService.GetResource).Methods("GET")                                  // Get a resource
+	APIRouter.HandleFunc("/system/resource/{resourcename}/addactions/{actionlist}", apiService.AddActionsToResource).Methods("PUT") // Add actions to a resource
+	APIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")                                            // Get all resources
+	//	-- Policy
+	APIRouter.HandleFunc("/system/policy", apiService.AddPolicy).Methods("PUT") // Add a policy
 
 	//	Setup the CORS options:
 	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))
