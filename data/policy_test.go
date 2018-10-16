@@ -57,6 +57,52 @@ func TestPolicy_AddPolicy_ValidPolicy_Successful(t *testing.T) {
 	}
 }
 
+func TestPolicy_GetPolicy_ValidPolicy_Successful(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+	testPolicy := data.Policy{
+		Name:   "UnitTest1",
+		Effect: policy.Allow,
+		Resources: []string{
+			"Someresource",
+		},
+		Actions: []string{
+			"Someaction",
+		},
+	}
+	_, err = db.AddResource(contextUser, "Someresource", "")
+
+	//	Act
+	newPolicy, err := db.AddPolicy(contextUser, testPolicy)
+
+	//	Assert
+	if err != nil {
+		t.Errorf("AddPolicy - Should add policy without error, but got: %s", err)
+	}
+
+	newPolicy2, err := db.GetPolicy(contextUser, testPolicy.Name)
+
+	if newPolicy2.Resources[0] != newPolicy.Resources[0] {
+		t.Errorf("GetPolicy failed: Should have gotten an item with the correct 'resources': %+v", newPolicy)
+	}
+
+	if newPolicy2.Actions[0] != newPolicy.Actions[0] {
+		t.Errorf("GetPolicy failed: Should have gotten an item with the correct 'actions': %+v", newPolicy)
+	}
+}
+
 func TestPolicy_AddPolicy_AlreadyExists_ReturnsError(t *testing.T) {
 
 	//	Arrange

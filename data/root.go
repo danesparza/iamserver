@@ -38,6 +38,7 @@ var (
 	sysreqAttachRoleToUsers    = &Request{"System", "AttachRoleToUsers"}
 	sysreqAttachRoleToGroups   = &Request{"System", "AttachRoleToGroups"}
 	sysreqAddPolicy            = &Request{"System", "AddPolicy"}
+	sysreqGetPolicy            = &Request{"System", "GetPolicy"}
 	sysreqAttachPolicyToUsers  = &Request{"System", "AttachPolicyToUsers"}
 	sysreqAttachPolicyToGroups = &Request{"System", "AttachPolicyToGroups"}
 	sysreqGetPoliciesForUser   = &Request{"System", "GetPoliciesForUser"}

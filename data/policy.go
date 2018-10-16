@@ -131,6 +131,45 @@ func (store Manager) AddPolicy(context User, newPolicy Policy) (Policy, error) {
 	return retval, nil
 }
 
+// GetPolicy gets a policy from the system
+func (store Manager) GetPolicy(context User, policyName string) (Policy, error) {
+	//	Our return item
+	retval := Policy{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetPolicy) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(GetKey("Policy", policyName))
+		if err != nil {
+			return err
+		}
+		val, err := item.Value()
+		if err != nil {
+			return err
+		}
+
+		if len(val) > 0 {
+			//	Unmarshal data into our item
+			if err := json.Unmarshal(val, &retval); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	//	If there was an error, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem getting the data: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+}
+
 // AttachPolicyToUsers attaches a policy to the given user(s)
 func (store Manager) AttachPolicyToUsers(context User, policyName string, users ...string) (Policy, error) {
 	//	Our return item
