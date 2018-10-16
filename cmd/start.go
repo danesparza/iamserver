@@ -84,6 +84,10 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/system/group/{groupname}", apiService.GetGroup).Methods("GET")                            // Get a group
 	APIRouter.HandleFunc("/system/group/{groupname}/addusers/{userlist}", apiService.AddUsersToGroup).Methods("PUT") // Add users to a group
 	APIRouter.HandleFunc("/system/groups", apiService.GetAllGroups).Methods("GET")                                   // Get all groups
+	//	-- Resource
+	APIRouter.HandleFunc("/system/resource", apiService.AddResource).Methods("PUT")                // Add a resource
+	APIRouter.HandleFunc("/system/resource/{resourcename}", apiService.GetResource).Methods("GET") // Get a resource
+	APIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")           // Get all resources
 
 	//	Setup the CORS options:
 	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))
