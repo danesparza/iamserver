@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -60,6 +61,14 @@ func start(cmd *cobra.Command, args []string) {
 	}
 	defer db.Close()
 	apiService := api.Service{DB: db}
+
+	//	Log the token TTL:
+	tokenttlstring := viper.GetString("apiservice.tokenttl")
+	_, err = strconv.Atoi(tokenttlstring)
+	if err != nil {
+		log.Fatalf("[ERROR] The apiservice.tokenttl config is invalid: %s", err)
+	}
+	log.Printf("[INFO] Token TTL: %s minutes", tokenttlstring)
 
 	//	Create a router and setup our REST endpoints...
 	UIRouter := mux.NewRouter()

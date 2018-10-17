@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/danesparza/iamserver/data"
 )
 
@@ -50,7 +52,13 @@ func (service Service) GetTokenForCredentials(rw http.ResponseWriter, req *http.
 	}
 
 	//	Get a token for a user:
-	token, err := service.DB.GetNewToken(user, 5*time.Minute)
+	tokenttlstring := viper.GetString("apiservice.tokenttl")
+	tokenttl, err := strconv.Atoi(tokenttlstring)
+	if err != nil {
+		sendErrorResponse(rw, fmt.Errorf("The apiservice.tokenttl configuration is invalid"), http.StatusUnprocessableEntity)
+		return
+	}
+	token, err := service.DB.GetNewToken(user, time.Duration(tokenttl)*time.Minute)
 
 	//	Create our response and send information back:
 	encodedToken := base64.StdEncoding.EncodeToString([]byte(token.ID))

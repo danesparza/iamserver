@@ -74,6 +74,7 @@ func initConfig() {
 	viper.SetDefault("apiservice.port", "3000")
 	viper.SetDefault("uiservice.port", "3001")
 	viper.SetDefault("apiservice.allowed-origins", "*")
+	viper.SetDefault("apiservice.tokenttl", "60")
 	viper.SetDefault("datastore.system", "./db/system")
 	viper.SetDefault("datastore.tokens", "./db/token")
 
