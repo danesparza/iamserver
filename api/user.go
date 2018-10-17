@@ -99,7 +99,7 @@ func (service Service) GetUser(rw http.ResponseWriter, req *http.Request) {
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.GetUser(user, vars["username"])
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusNotFound)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 

@@ -99,7 +99,8 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/system/resource/{resourcename}/addactions/{actionlist}", apiService.AddActionsToResource).Methods("PUT") // Add actions to a resource
 	APIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")                                            // Get all resources
 	//	-- Policy
-	APIRouter.HandleFunc("/system/policy", apiService.AddPolicy).Methods("PUT") // Add a policy
+	APIRouter.HandleFunc("/system/policy", apiService.AddPolicy).Methods("PUT")              // Add a policy
+	APIRouter.HandleFunc("/system/policy/{policyname}", apiService.GetPolicy).Methods("GET") // Get a policy
 
 	//	Setup the CORS options:
 	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))
