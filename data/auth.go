@@ -10,8 +10,11 @@ import (
 func (store Manager) IsUserRequestAuthorized(user User, request *Request) bool {
 	retval := false
 
-	//	If using the special system user, the request is allowed:
-	if user.Name == SystemUser.Name && user.Created.IsZero() {
+	//	If:
+	//	- using the special system user
+	//	- it's for the system resource
+	//	Then: the request is allowed
+	if user.Name == SystemUser.Name && user.Created.IsZero() && request.Resource == "System" {
 		return true
 	}
 

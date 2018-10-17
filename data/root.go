@@ -135,6 +135,7 @@ func (store Manager) SystemBootstrap() (User, string, error) {
 		sysreqAttachRoleToUsers.Action,
 		sysreqAttachRoleToGroups.Action,
 		sysreqAddPolicy.Action,
+		sysreqGetPolicy.Action,
 		sysreqAttachPolicyToUsers.Action,
 		sysreqAttachPolicyToGroups.Action,
 		sysreqGetPoliciesForUser.Action,
