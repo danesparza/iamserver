@@ -85,22 +85,25 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/oauth/token/client", api.HelloWorld).Methods("POST")
 	APIRouter.HandleFunc("/oauth/authorize", api.HelloWorld).Methods("GET")
 	//	-- User
-	APIRouter.HandleFunc("/system/user", apiService.AddUser).Methods("PUT")            // Add a user
-	APIRouter.HandleFunc("/system/user/{username}", apiService.GetUser).Methods("GET") // Get a user
+	APIRouter.HandleFunc("/system/users", apiService.AddUser).Methods("POST")          // Add a user
 	APIRouter.HandleFunc("/system/users", apiService.GetAllUsers).Methods("GET")       // Get all users
+	APIRouter.HandleFunc("/system/user/{username}", apiService.GetUser).Methods("GET") // Get a user
 	//	-- Group
-	APIRouter.HandleFunc("/system/group", apiService.AddGroup).Methods("PUT")                                        // Add a group
+	APIRouter.HandleFunc("/system/groups", apiService.AddGroup).Methods("POST")                                      // Add a group
+	APIRouter.HandleFunc("/system/groups", apiService.GetAllGroups).Methods("GET")                                   // Get all groups
 	APIRouter.HandleFunc("/system/group/{groupname}", apiService.GetGroup).Methods("GET")                            // Get a group
 	APIRouter.HandleFunc("/system/group/{groupname}/addusers/{userlist}", apiService.AddUsersToGroup).Methods("PUT") // Add users to a group
-	APIRouter.HandleFunc("/system/groups", apiService.GetAllGroups).Methods("GET")                                   // Get all groups
 	//	-- Resource
-	APIRouter.HandleFunc("/system/resource", apiService.AddResource).Methods("PUT")                                                 // Add a resource
+	APIRouter.HandleFunc("/system/resources", apiService.AddResource).Methods("POST")                                               // Add a resource
+	APIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")                                            // Get all resources
 	APIRouter.HandleFunc("/system/resource/{resourcename}", apiService.GetResource).Methods("GET")                                  // Get a resource
 	APIRouter.HandleFunc("/system/resource/{resourcename}/addactions/{actionlist}", apiService.AddActionsToResource).Methods("PUT") // Add actions to a resource
-	APIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")                                            // Get all resources
 	//	-- Policy
-	APIRouter.HandleFunc("/system/policy", apiService.AddPolicy).Methods("PUT")              // Add a policy
+	APIRouter.HandleFunc("/system/policies", apiService.AddPolicy).Methods("POST")           // Add a policy
 	APIRouter.HandleFunc("/system/policy/{policyname}", apiService.GetPolicy).Methods("GET") // Get a policy
+	//	-- Role
+	APIRouter.HandleFunc("/system/roles", apiService.AddRole).Methods("POST")          // Add a role
+	APIRouter.HandleFunc("/system/role/{rolename}", apiService.GetRole).Methods("GET") // Get a role
 
 	//	Setup the CORS options:
 	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))

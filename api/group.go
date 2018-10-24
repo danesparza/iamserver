@@ -46,7 +46,7 @@ func (service Service) AddGroup(rw http.ResponseWriter, req *http.Request) {
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.AddGroup(user, request.Name, request.Description)
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusUnauthorized)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 
