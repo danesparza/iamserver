@@ -102,9 +102,12 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/system/policies", apiService.AddPolicy).Methods("POST")           // Add a policy
 	APIRouter.HandleFunc("/system/policy/{policyname}", apiService.GetPolicy).Methods("GET") // Get a policy
 	//	-- Role
-	APIRouter.HandleFunc("/system/roles", apiService.AddRole).Methods("POST")          // Add a role
-	APIRouter.HandleFunc("/system/roles", apiService.GetAllRoles).Methods("GET")       // Get all roles
-	APIRouter.HandleFunc("/system/role/{rolename}", apiService.GetRole).Methods("GET") // Get a role
+	APIRouter.HandleFunc("/system/roles", apiService.AddRole).Methods("POST")                                             // Add a role
+	APIRouter.HandleFunc("/system/roles", apiService.GetAllRoles).Methods("GET")                                          // Get all roles
+	APIRouter.HandleFunc("/system/role/{rolename}", apiService.GetRole).Methods("GET")                                    // Get a role
+	APIRouter.HandleFunc("/system/role/{rolename}/policies/{policylist}", apiService.AttachPoliciesToRole).Methods("PUT") // Attach role to policy(s)
+	APIRouter.HandleFunc("/system/role/{rolename}/groups/{grouplist}", apiService.AttachRoleToGroups).Methods("PUT")      // Attach role to group(s)
+	APIRouter.HandleFunc("/system/role/{rolename}/users/{userlist}", apiService.AttachRoleToUsers).Methods("PUT")         // Attach role to user(s)
 
 	//	Setup the CORS options:
 	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))
