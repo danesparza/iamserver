@@ -85,22 +85,26 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/oauth/token/client", api.HelloWorld).Methods("POST")
 	APIRouter.HandleFunc("/oauth/authorize", api.HelloWorld).Methods("GET")
 	//	-- User
-	APIRouter.HandleFunc("/system/users", apiService.AddUser).Methods("POST")          // Add a user
-	APIRouter.HandleFunc("/system/users", apiService.GetAllUsers).Methods("GET")       // Get all users
-	APIRouter.HandleFunc("/system/user/{username}", apiService.GetUser).Methods("GET") // Get a user
+	APIRouter.HandleFunc("/system/users", apiService.AddUser).Methods("POST")                              // Add a user
+	APIRouter.HandleFunc("/system/users", apiService.GetAllUsers).Methods("GET")                           // Get all users
+	APIRouter.HandleFunc("/system/user/{username}", apiService.GetUser).Methods("GET")                     // Get a user
+	APIRouter.HandleFunc("/system/user/{username}/policies", apiService.GetPoliciesForUser).Methods("GET") // Get policies for a user
 	//	-- Group
-	APIRouter.HandleFunc("/system/groups", apiService.AddGroup).Methods("POST")                                      // Add a group
-	APIRouter.HandleFunc("/system/groups", apiService.GetAllGroups).Methods("GET")                                   // Get all groups
-	APIRouter.HandleFunc("/system/group/{groupname}", apiService.GetGroup).Methods("GET")                            // Get a group
-	APIRouter.HandleFunc("/system/group/{groupname}/addusers/{userlist}", apiService.AddUsersToGroup).Methods("PUT") // Add users to a group
+	APIRouter.HandleFunc("/system/groups", apiService.AddGroup).Methods("POST")                                   // Add a group
+	APIRouter.HandleFunc("/system/groups", apiService.GetAllGroups).Methods("GET")                                // Get all groups
+	APIRouter.HandleFunc("/system/group/{groupname}", apiService.GetGroup).Methods("GET")                         // Get a group
+	APIRouter.HandleFunc("/system/group/{groupname}/users/{userlist}", apiService.AddUsersToGroup).Methods("PUT") // Add users to a group
 	//	-- Resource
-	APIRouter.HandleFunc("/system/resources", apiService.AddResource).Methods("POST")                                               // Add a resource
-	APIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")                                            // Get all resources
-	APIRouter.HandleFunc("/system/resource/{resourcename}", apiService.GetResource).Methods("GET")                                  // Get a resource
-	APIRouter.HandleFunc("/system/resource/{resourcename}/addactions/{actionlist}", apiService.AddActionsToResource).Methods("PUT") // Add actions to a resource
+	APIRouter.HandleFunc("/system/resources", apiService.AddResource).Methods("POST")                                            // Add a resource
+	APIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")                                         // Get all resources
+	APIRouter.HandleFunc("/system/resource/{resourcename}", apiService.GetResource).Methods("GET")                               // Get a resource
+	APIRouter.HandleFunc("/system/resource/{resourcename}/actions/{actionlist}", apiService.AddActionsToResource).Methods("PUT") // Add actions to a resource
 	//	-- Policy
-	APIRouter.HandleFunc("/system/policies", apiService.AddPolicy).Methods("POST")           // Add a policy
-	APIRouter.HandleFunc("/system/policy/{policyname}", apiService.GetPolicy).Methods("GET") // Get a policy
+	APIRouter.HandleFunc("/system/policies", apiService.AddPolicy).Methods("POST")                                         // Add a policy
+	APIRouter.HandleFunc("/system/policies", apiService.GetAllPolicies).Methods("GET")                                     // Get all policies
+	APIRouter.HandleFunc("/system/policy/{policyname}", apiService.GetPolicy).Methods("GET")                               // Get a policy
+	APIRouter.HandleFunc("/system/policy/{policyname}/users/{userlist}", apiService.AttachPolicyToUsers).Methods("PUT")    // Attach policy to user(s)
+	APIRouter.HandleFunc("/system/policy/{policyname}/groups/{grouplist}", apiService.AttachPolicyToGroups).Methods("PUT") // Attach policy to group(s)
 	//	-- Role
 	APIRouter.HandleFunc("/system/roles", apiService.AddRole).Methods("POST")                                             // Add a role
 	APIRouter.HandleFunc("/system/roles", apiService.GetAllRoles).Methods("GET")                                          // Get all roles

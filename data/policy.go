@@ -170,6 +170,65 @@ func (store Manager) GetPolicy(context User, policyName string) (Policy, error) 
 	return retval, nil
 }
 
+// GetAllPolicies gets all policies in the system
+func (store Manager) GetAllPolicies(context User) ([]Policy, error) {
+	//	Our return item
+	retval := []Policy{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqGetAllPolicies) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+
+		//	Get an iterator
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		//	Set our prefix
+		prefix := GetKey("Policy")
+
+		//	Iterate over our values:
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+
+			//	Get the item
+			item := it.Item()
+
+			//	Get the item key
+			// k := item.Key()
+
+			//	Get the item value
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			if len(val) > 0 {
+				//	Create our item:
+				item := Policy{}
+
+				//	Unmarshal data into our item
+				if err := json.Unmarshal(val, &item); err != nil {
+					return err
+				}
+
+				//	Add to the array of returned users:
+				retval = append(retval, item)
+			}
+		}
+		return nil
+	})
+
+	//	If there was an error, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem getting the list of items: %s", err)
+	}
+
+	//	Return our data:
+	return retval, nil
+}
+
 // AttachPolicyToUsers attaches a policy to the given user(s)
 func (store Manager) AttachPolicyToUsers(context User, policyName string, users ...string) (Policy, error) {
 	//	Our return item

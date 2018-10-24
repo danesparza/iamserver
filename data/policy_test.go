@@ -103,6 +103,70 @@ func TestPolicy_GetPolicy_ValidPolicy_Successful(t *testing.T) {
 	}
 }
 
+func TestPolicy_GetAllPolicies_ValidPolicies_Successful(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Errorf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	_, err = db.AddResource(contextUser, "Someresource", "")
+
+	db.AddPolicy(contextUser, data.Policy{
+		Name:   "UnitTest1",
+		Effect: policy.Allow,
+		Resources: []string{
+			"Someresource",
+		},
+		Actions: []string{
+			"Someaction",
+		},
+	})
+
+	db.AddPolicy(contextUser, data.Policy{
+		Name:   "UnitTest2",
+		Effect: policy.Allow,
+		Resources: []string{
+			"Someresource",
+		},
+		Actions: []string{
+			"Someaction",
+		},
+	})
+
+	db.AddPolicy(contextUser, data.Policy{
+		Name:   "UnitTest3",
+		Effect: policy.Allow,
+		Resources: []string{
+			"Someresource",
+		},
+		Actions: []string{
+			"Someaction",
+		},
+	})
+
+	//	Act
+	allPolicies, err := db.GetAllPolicies(contextUser)
+
+	//	Assert
+	if err != nil {
+		t.Errorf("GetAllPolicies - Should get all policies without error, but got: %s", err)
+	}
+
+	if len(allPolicies) != 3 {
+		t.Errorf("GetAllPolicies failed: Should have gotten all policies, but got %v", len(allPolicies))
+	}
+}
+
 func TestPolicy_AddPolicy_AlreadyExists_ReturnsError(t *testing.T) {
 
 	//	Arrange

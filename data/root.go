@@ -39,6 +39,7 @@ var (
 	sysreqAttachRoleToGroups   = &Request{"System", "AttachRoleToGroups"}
 	sysreqAddPolicy            = &Request{"System", "AddPolicy"}
 	sysreqGetPolicy            = &Request{"System", "GetPolicy"}
+	sysreqGetAllPolicies       = &Request{"System", "GetAllPolicies"}
 	sysreqAttachPolicyToUsers  = &Request{"System", "AttachPolicyToUsers"}
 	sysreqAttachPolicyToGroups = &Request{"System", "AttachPolicyToGroups"}
 	sysreqGetPoliciesForUser   = &Request{"System", "GetPoliciesForUser"}
@@ -136,6 +137,7 @@ func (store Manager) SystemBootstrap() (User, string, error) {
 		sysreqAttachRoleToGroups.Action,
 		sysreqAddPolicy.Action,
 		sysreqGetPolicy.Action,
+		sysreqGetAllPolicies.Action,
 		sysreqAttachPolicyToUsers.Action,
 		sysreqAttachPolicyToGroups.Action,
 		sysreqGetPoliciesForUser.Action,
