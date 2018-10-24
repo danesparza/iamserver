@@ -45,7 +45,7 @@ func (service Service) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.AddPolicy(user, request)
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusUnauthorized)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 

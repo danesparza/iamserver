@@ -52,7 +52,7 @@ func (service Service) AddUser(rw http.ResponseWriter, req *http.Request) {
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.AddUser(user, request.User, request.Password)
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusUnauthorized)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -99,7 +99,7 @@ func (service Service) GetUser(rw http.ResponseWriter, req *http.Request) {
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.GetUser(user, vars["username"])
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusInternalServerError)
+		sendErrorResponse(rw, err, http.StatusNotFound)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (service Service) GetAllUsers(rw http.ResponseWriter, req *http.Request) {
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.GetAllUsers(user)
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusNotFound)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 

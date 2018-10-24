@@ -93,7 +93,7 @@ func (service Service) GetGroup(rw http.ResponseWriter, req *http.Request) {
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.GetGroup(user, vars["groupname"])
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusUnauthorized)
+		sendErrorResponse(rw, err, http.StatusNotFound)
 		return
 	}
 
@@ -137,7 +137,7 @@ func (service Service) GetAllGroups(rw http.ResponseWriter, req *http.Request) {
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.GetAllGroups(user)
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusUnauthorized)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -188,7 +188,7 @@ func (service Service) AddUsersToGroup(rw http.ResponseWriter, req *http.Request
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.AddUsersToGroup(user, vars["groupname"], userList...)
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusUnauthorized)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 

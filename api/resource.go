@@ -137,7 +137,7 @@ func (service Service) GetAllResources(rw http.ResponseWriter, req *http.Request
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.GetAllResources(user)
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusNotFound)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -188,7 +188,7 @@ func (service Service) AddActionsToResource(rw http.ResponseWriter, req *http.Re
 	//	Perform the action with the context user
 	dataResponse, err := service.DB.AddActionToResource(user, vars["resourcename"], actionList...)
 	if err != nil {
-		sendErrorResponse(rw, err, http.StatusUnauthorized)
+		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
 	}
 
