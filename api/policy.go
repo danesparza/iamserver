@@ -51,7 +51,7 @@ func (service Service) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 
 	//	Create our response and send information back:
 	response := SystemResponse{
-		Status:  http.StatusOK,
+		Status:  http.StatusCreated,
 		Message: "Policy added",
 		Data:    dataResponse,
 	}

@@ -103,6 +103,7 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/system/policy/{policyname}", apiService.GetPolicy).Methods("GET") // Get a policy
 	//	-- Role
 	APIRouter.HandleFunc("/system/roles", apiService.AddRole).Methods("POST")          // Add a role
+	APIRouter.HandleFunc("/system/roles", apiService.GetAllRoles).Methods("GET")       // Get all roles
 	APIRouter.HandleFunc("/system/role/{rolename}", apiService.GetRole).Methods("GET") // Get a role
 
 	//	Setup the CORS options:

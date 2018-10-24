@@ -52,7 +52,7 @@ func (service Service) AddResource(rw http.ResponseWriter, req *http.Request) {
 
 	//	Create our response and send information back:
 	response := SystemResponse{
-		Status:  http.StatusOK,
+		Status:  http.StatusCreated,
 		Message: "Resource added",
 		Data:    dataResponse,
 	}
