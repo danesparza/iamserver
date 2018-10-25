@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,10 @@ import (
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+var (
+	uiDirectory string
 )
 
 // startCmd represents the start command
@@ -46,7 +51,38 @@ var startCmd = &cobra.Command{
 
 func start(cmd *cobra.Command, args []string) {
 
-	//	Create our 'sigs' and 'done' channels
+	//	First, verify the system has been bootstrapped.  If it hasn't, instruct the user to do that first
+	if _, err := os.Stat(viper.GetString("datastore.system")); os.IsNotExist(err) {
+		log.Fatalf("[ERROR] System has not been bootstrapped.  \n\n*** IAMserver must be bootstrapped prior to use ***\n\nTo bootstrap the system, run:\niamserver bootstrap\n")
+	}
+
+	//	Next, verify that the TLS keys and certs we expect to use actually exist.  If they don't,
+	//	indicate they need to be created and give some help:
+	missingTLSInfo := ""
+	if _, err := os.Stat(viper.GetString("apiservice.tlscert")); os.IsNotExist(err) {
+		missingTLSInfo = missingTLSInfo + fmt.Sprintf("API service certificate: %s\n", viper.GetString("apiservice.tlscert"))
+	}
+	if _, err := os.Stat(viper.GetString("apiservice.tlskey")); os.IsNotExist(err) {
+		missingTLSInfo = missingTLSInfo + fmt.Sprintf("API service key: %s\n", viper.GetString("apiservice.tlskey"))
+	}
+	if _, err := os.Stat(viper.GetString("uiservice.tlscert")); os.IsNotExist(err) {
+		missingTLSInfo = missingTLSInfo + fmt.Sprintf("UI service certificate: %s\n", viper.GetString("uiservice.tlscert"))
+	}
+	if _, err := os.Stat(viper.GetString("uiservice.tlskey")); os.IsNotExist(err) {
+		missingTLSInfo = missingTLSInfo + fmt.Sprintf("UI service key: %s\n", viper.GetString("uiservice.tlskey"))
+	}
+
+	if missingTLSInfo != "" {
+		log.Fatalf("[ERROR] TLS files not found.  \n\nThe following items are missing: \n%s\n*** IAMserver requires TLS keys and certs to operate ***\n\nTo generate TLS keys/certs for the local machine (for testing purposes) you can use:\nhttps://github.com/FiloSottile/mkcert\n or \nhttps://www.npmjs.com/package/tls-keygen\n", missingTLSInfo)
+	}
+
+	//	Log our TLS key information
+	log.Printf("[INFO] API TLS cert: %s\n", viper.GetString("apiservice.tlscert"))
+	log.Printf("[INFO] API TLS key: %s\n", viper.GetString("apiservice.tlskey"))
+	log.Printf("[INFO] UI TLS cert: %s\n", viper.GetString("uiservice.tlscert"))
+	log.Printf("[INFO] UI TLS key: %s\n", viper.GetString("uiservice.tlskey"))
+
+	//	Create our 'sigs' and 'done' channels (this is for graceful shutdown)
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
 
@@ -54,9 +90,11 @@ func start(cmd *cobra.Command, args []string) {
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 
 	//	Create a DBManager object and associate with the api.Service
+	log.Printf("[INFO] Using System DB: %s", viper.GetString("datastore.system"))
+	log.Printf("[INFO] Using Token DB: %s", viper.GetString("datastore.tokens"))
 	db, err := data.NewManager(viper.GetString("datastore.system"), viper.GetString("datastore.tokens"))
 	if err != nil {
-		log.Printf("[ERROR] Error trying to open the system database: %s", err)
+		log.Printf("[ERROR] Error trying to open the system or token database: %s", err)
 		return
 	}
 	defer db.Close()
@@ -75,7 +113,22 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter := mux.NewRouter()
 
 	//	UI ROUTES
-	UIRouter.HandleFunc("/", api.ShowUI)
+	if viper.GetString("uiservice.ui-dir") == "" {
+		//	Use the static assets file generated with
+		//	https://github.com/elazarl/go-bindata-assetfs using the application-monitor-ui from
+		//	https://github.com/danesparza/application-monitor-ui.
+		//
+		//	To generate this file, place the 'ui'
+		//	directory under the main application-monitor-ui directory and run the commands:
+		//	go-bindata-assetfs -pkg cmd build/...
+		//	Move bindata_assetfs.go to the application-monitor cmd directory
+		//	go install ./...
+		//  // Router.PathPrefix("/ui").Handler(http.StripPrefix("/ui", http.FileServer(assetFS())))
+	} else {
+		//	Use the supplied directory:
+		log.Printf("[INFO] Using UI directory: %s\n", viper.GetString("uiservice.ui-dir"))
+		UIRouter.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(viper.GetString("uiservice.ui-dir")))))
+	}
 
 	//	SERVICE ROUTES
 	//	-- Auth
@@ -132,12 +185,6 @@ func start(cmd *cobra.Command, args []string) {
 		formattedUIInterface = "127.0.0.1"
 	}
 
-	//	Log our TLS key information
-	log.Printf("[INFO] API TLS cert: %s\n", viper.GetString("apiservice.tlscert"))
-	log.Printf("[INFO] API TLS key: %s\n", viper.GetString("apiservice.tlskey"))
-	log.Printf("[INFO] UI TLS cert: %s\n", viper.GetString("uiservice.tlscert"))
-	log.Printf("[INFO] UI TLS key: %s\n", viper.GetString("uiservice.tlskey"))
-
 	//	Start our shutdown listener (for graceful shutdowns)
 	go func() {
 		//	If we get a signal...
@@ -164,4 +211,7 @@ func start(cmd *cobra.Command, args []string) {
 
 func init() {
 	rootCmd.AddCommand(startCmd)
+
+	startCmd.Flags().StringVarP(&uiDirectory, "ui-dir", "u", "", "Directory for the UI")
+	viper.BindPFlag("uiservice.ui-dir", startCmd.Flags().Lookup("ui-dir"))
 }

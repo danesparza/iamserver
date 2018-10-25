@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,6 +19,13 @@ indices, admin user, and credentials.
 
 Running this more than once may result in errors`,
 	Run: func(cmd *cobra.Command, args []string) {
+		//	Make sure the system and token database paths exist:
+		err := os.MkdirAll(viper.GetString("datastore.system"), 0644)
+		if err != nil {
+			log.Fatalf("[ERROR] Error trying to prep the system database path: %s", err)
+			return
+		}
+
 		//	Spin up a Manager
 		db, err := data.NewManager(viper.GetString("datastore.system"), viper.GetString("datastore.tokens"))
 		if err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
 	"github.com/hashicorp/logutils"
 	homedir "github.com/mitchellh/go-homedir"
@@ -42,7 +43,6 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/iamserver.yml)")
-
 	rootCmd.PersistentFlags().StringVarP(&loglevel, "loglevel", "l", "WARN", "Log level: DEBUG/INFO/WARN/ERROR")
 
 	//	Bind config flags for optional config file override:
@@ -51,17 +51,17 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
 		viper.SetConfigName("iamserver") // name of config file (without extension)
 		viper.AddConfigPath(home)        // adding home directory as first search path
 		viper.AddConfigPath(".")         // also look in the working directory
@@ -75,8 +75,12 @@ func initConfig() {
 	viper.SetDefault("uiservice.port", "3001")
 	viper.SetDefault("apiservice.allowed-origins", "*")
 	viper.SetDefault("apiservice.tokenttl", "60")
-	viper.SetDefault("datastore.system", "./db/system")
-	viper.SetDefault("datastore.tokens", "./db/token")
+	viper.SetDefault("apiservice.tlscert", path.Join(home, "iamserver", "cert.pem"))
+	viper.SetDefault("apiservice.tlskey", path.Join(home, "iamserver", "key.pem"))
+	viper.SetDefault("uiservice.tlscert", path.Join(home, "iamserver", "cert.pem"))
+	viper.SetDefault("uiservice.tlskey", path.Join(home, "iamserver", "key.pem"))
+	viper.SetDefault("datastore.system", path.Join(home, "iamserver", "db", "system"))
+	viper.SetDefault("datastore.tokens", path.Join(home, "iamserver", "db", "token"))
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
