@@ -23,3 +23,6 @@ iamserver.yml
 
 # Ignore system/token database files:
 db/*
+
+# Ignore any sample enrollment images created
+2fa_enrollment.png
