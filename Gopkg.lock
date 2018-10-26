@@ -30,15 +30,16 @@
   version = "v1.5.3"
 
 [[projects]]
-  digest = "1:a0a370c0e85c730ba2d8d8a0bf72d68a5f516d0ead8d2325832cdbd909a1ce7b"
+  digest = "1:133571b01de099dc576722638eff4e0ac43c551228c31d6b5c6bdf0e1cdfab37"
   name = "github.com/danesparza/otp"
   packages = [
     ".",
+    "hotp",
     "totp",
   ]
   pruneopts = "UT"
-  revision = "be78767b3e392ce45ea73444451022a6fc32ad0d"
-  version = "v1.0.1"
+  revision = "ee9f40474fea09701db664004f305746369fa063"
+  version = "v1.0.2"
 
 [[projects]]
   digest = "1:5741c0c81f8be9b368a85b12d13127c9cd1bbea22b9c23bb4245922a31b39ace"
