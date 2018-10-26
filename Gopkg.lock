@@ -30,6 +30,17 @@
   version = "v1.5.3"
 
 [[projects]]
+  digest = "1:a0a370c0e85c730ba2d8d8a0bf72d68a5f516d0ead8d2325832cdbd909a1ce7b"
+  name = "github.com/danesparza/otp"
+  packages = [
+    ".",
+    "totp",
+  ]
+  pruneopts = "UT"
+  revision = "be78767b3e392ce45ea73444451022a6fc32ad0d"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:5741c0c81f8be9b368a85b12d13127c9cd1bbea22b9c23bb4245922a31b39ace"
   name = "github.com/dgraph-io/badger"
   packages = [
@@ -168,18 +179,6 @@
   pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
-
-[[projects]]
-  digest = "1:6c7a3f738e37a1c7ad3d56122a34932140654d51a57e01f8613cdf3eaf050911"
-  name = "github.com/pquerna/otp"
-  packages = [
-    ".",
-    "hotp",
-    "totp",
-  ]
-  pruneopts = "UT"
-  revision = "b7b89250c468c06871d3837bee02e2d5c155ae19"
-  version = "v1.0.0"
 
 [[projects]]
   digest = "1:0b8dd7447e420afff0260179dc892711e837edd1d446bc78dab924624a3c3c81"
@@ -326,13 +325,13 @@
   analyzer-version = 1
   input-imports = [
     "github.com/danesparza/badger",
+    "github.com/danesparza/otp",
+    "github.com/danesparza/otp/totp",
     "github.com/gorilla/mux",
     "github.com/hashicorp/golang-lru",
     "github.com/hashicorp/logutils",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/errors",
-    "github.com/pquerna/otp",
-    "github.com/pquerna/otp/totp",
     "github.com/rs/cors",
     "github.com/rs/xid",
     "github.com/spf13/cobra",

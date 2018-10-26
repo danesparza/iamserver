@@ -8,10 +8,9 @@ import (
 	"image/png"
 	"time"
 
-	"github.com/pquerna/otp"
-
 	"github.com/danesparza/badger"
-	"github.com/pquerna/otp/totp"
+	"github.com/danesparza/otp"
+	"github.com/danesparza/otp/totp"
 )
 
 // TotpEnrollment represents an enrollment record for
