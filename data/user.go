@@ -20,6 +20,8 @@ type User struct {
 	Enabled     bool        `json:"enabled"`
 	Description string      `json:"description"`
 	SecretHash  string      `json:"secrethash"`
+	TOTPEnabled bool        `json:"totpenabled"`
+	TOTPSecret  string      `json:"totpsecret"`
 	Created     time.Time   `json:"created"`
 	CreatedBy   string      `json:"created_by"`
 	Updated     time.Time   `json:"updated"`
