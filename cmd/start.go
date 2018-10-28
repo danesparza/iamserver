@@ -139,6 +139,7 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/oauth/authorize", api.HelloWorld).Methods("GET")
 	//	-- 2FA enrollment
 	APIRouter.HandleFunc("/2fa", apiService.BeginTOTPEnrollment).Methods("POST")
+	APIRouter.HandleFunc("/2fa", apiService.FinishTOTPEnrollment).Methods("PUT")
 	APIRouter.HandleFunc("/2fa", apiService.GetTOTPEnrollmentImage).Methods("GET")
 	//	-- User
 	APIRouter.HandleFunc("/system/users", apiService.AddUser).Methods("POST")                              // Add a user
