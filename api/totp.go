@@ -141,7 +141,7 @@ func (service Service) FinishTOTPEnrollment(rw http.ResponseWriter, req *http.Re
 	}
 
 	//	Perform the action with the context user
-	_, err := service.DB.FinishTOTPEnrollment(user.Name, request.PassCode)
+	_, err = service.DB.FinishTOTPEnrollment(user.Name, request.PassCode)
 	if err != nil {
 		sendErrorResponse(rw, err, http.StatusInternalServerError)
 		return
