@@ -51,6 +51,8 @@ func (service Service) GetTokenForCredentials(rw http.ResponseWriter, req *http.
 		return
 	}
 
+	//	If the user has enabled two factor authentication, make sure they authenticate using two-factor:
+
 	//	Get a token for a user:
 	tokenttlstring := viper.GetString("apiservice.tokenttl")
 	tokenttl, err := strconv.Atoi(tokenttlstring)
