@@ -140,6 +140,67 @@ func (store Manager) GetUser(context User, userName string) (User, error) {
 	return retval, nil
 }
 
+// DeleteUser adds a user to the system
+func (store Manager) DeleteUser(context User, user User, userPassword string) (User, error) {
+	//	Our return item
+	retval := User{}
+
+	//	Security check:  Are we authorized to perform this action?
+	if !store.IsUserRequestAuthorized(context, sysreqDeleteUser) {
+		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
+	}
+
+	//	First -- does the user exist already?
+	err := store.systemdb.View(func(txn *badger.Txn) error {
+		_, err := txn.Get(GetKey("User", user.Name))
+		return err
+	})
+
+	//	If got an error, we have a problem:
+	if err != nil {
+		return retval, fmt.Errorf("User does not exist")
+	}
+
+	//	Make sure it's initially set to 'enabled':
+	user.Enabled = false
+
+	//	Remove the user from groups / roles / policies
+
+	//	Reset the groups / roles / policies collections:
+	user.Groups = []string{}
+	user.Roles = []string{}
+	user.Policies = []string{}
+
+	//	Update the updated / deleted fields:
+	user.Deleted = zero.TimeFrom(time.Now())
+	user.Updated = time.Now()
+	user.DeletedBy = null.StringFrom(context.Name)
+	user.UpdatedBy = context.Name
+
+	//	Serialize to JSON format
+	encoded, err := json.Marshal(user)
+	if err != nil {
+		return retval, fmt.Errorf("Problem serializing the data: %s", err)
+	}
+
+	//	Save it to the database with a TTL:
+	err = store.systemdb.Update(func(txn *badger.Txn) error {
+		err := txn.SetWithTTL(GetKey("User", user.Name), encoded, 168*time.Hour) // Set with an expire time of 1 week
+		return err
+	})
+
+	//	If there was an error saving the data, report it:
+	if err != nil {
+		return retval, fmt.Errorf("Problem saving the data: %s", err)
+	}
+
+	//	Set our retval:
+	retval = user
+
+	//	Return our data:
+	return retval, nil
+}
+
 // GetAllUsers gets all users in the system
 func (store Manager) GetAllUsers(context User) ([]User, error) {
 	//	Our return item

@@ -23,6 +23,7 @@ var (
 	sysreqAddUser              = &Request{"System", "AddUser"}
 	sysreqGetUser              = &Request{"System", "GetUser"}
 	sysreqGetAllUsers          = &Request{"System", "GetAllUsers"}
+	sysreqDeleteUser           = &Request{"System", "DeleteUser"}
 	sysreqAddGroup             = &Request{"System", "AddGroup"}
 	sysreqGetGroup             = &Request{"System", "GetGroup"}
 	sysreqGetAllGroups         = &Request{"System", "GetAllGroups"}
