@@ -62,7 +62,7 @@ func (service Service) GetTokenForCredentials(rw http.ResponseWriter, req *http.
 
 		//	If it's not valid, don't let the user get a token:
 		if validTOTP != true {
-			sendErrorResponse(rw, fmt.Errorf("Two factor authentication is enabled, but valid 2FA/TOTP/Authenticator code not passed"), http.StatusUnauthorized)
+			sendErrorResponse(rw, fmt.Errorf("Two factor authentication is enabled, but valid code was not passed in the TOTP header"), http.StatusPreconditionFailed)
 			return
 		}
 	}
