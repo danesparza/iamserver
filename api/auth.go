@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/danesparza/otp/totp"
+
 	"github.com/spf13/viper"
 
 	"github.com/danesparza/iamserver/data"
@@ -32,8 +34,9 @@ func (service Service) GetTokenForCredentials(rw http.ResponseWriter, req *http.
 	//	req.Body is a ReadCloser -- we need to remember to close it:
 	defer req.Body.Close()
 
-	//	Get the authorization header:
+	//	Get the authorization header and TOTP header:
 	authHeader := req.Header.Get("Authorization")
+	totpHeader := req.Header.Get("TOTP")
 
 	//	If the basic auth header wasn't supplied, return an error
 	if basicHeaderValid(authHeader) != true {
@@ -52,6 +55,17 @@ func (service Service) GetTokenForCredentials(rw http.ResponseWriter, req *http.
 	}
 
 	//	If the user has enabled two factor authentication, make sure they authenticate using two-factor:
+	if user.TOTPEnabled == true {
+
+		//	Validate the code passed in the TOTP header
+		validTOTP := totp.Validate(totpHeader, user.TOTPSecret)
+
+		//	If it's not valid, don't let the user get a token:
+		if validTOTP != true {
+			sendErrorResponse(rw, fmt.Errorf("Two factor authentication is enabled, but valid 2FA/TOTP/Authenticator code not passed"), http.StatusUnauthorized)
+			return
+		}
+	}
 
 	//	Get a token for a user:
 	tokenttlstring := viper.GetString("apiservice.tokenttl")
