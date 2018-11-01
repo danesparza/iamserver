@@ -127,8 +127,9 @@ func start(cmd *cobra.Command, args []string) {
 	} else {
 		//	Use the supplied directory:
 		log.Printf("[INFO] Using UI directory: %s\n", viper.GetString("uiservice.ui-dir"))
-		UIRouter.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(viper.GetString("uiservice.ui-dir")))))
+		UIRouter.PathPrefix("/ui").Handler(http.StripPrefix("/ui", http.FileServer(http.Dir(viper.GetString("uiservice.ui-dir")))))
 	}
+	UIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("GET") // Get a token (from credentials)
 
 	//	SERVICE ROUTES
 	//	-- Auth
