@@ -6,8 +6,10 @@ import (
 	"path"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/danesparza/iamserver/data"
+	"github.com/danesparza/iamserver/policy"
 	"github.com/xtgo/set"
 )
 
@@ -196,35 +198,65 @@ func TestRoot_GetOverview_HighCapacity_Successful(t *testing.T) {
 		t.Errorf("SystemBootstrap - Should bootstrap without error, but got: %s", err)
 	}
 
-	itemCountToAdd := 100000
+	itemCountToAdd := 10000
 
 	//	-- Add resources:
 	for r := 1; r <= itemCountToAdd; r++ {
 		db.AddResource(adminUser, fmt.Sprintf("Resource name: %v", r), fmt.Sprintf("Resource desc: %v", r))
 	}
 
-	//	Act
+	//	-- Add groups:
+	for r := 1; r <= itemCountToAdd; r++ {
+		db.AddGroup(adminUser, fmt.Sprintf("Group name: %v", r), fmt.Sprintf("Group desc: %v", r))
+	}
+
+	//	-- Add roles:
+	for r := 1; r <= itemCountToAdd; r++ {
+		db.AddRole(adminUser, fmt.Sprintf("Role name: %v", r), fmt.Sprintf("Role desc: %v", r))
+	}
+
+	//	-- Add policies:
+	for r := 1; r <= itemCountToAdd; r++ {
+		db.AddPolicy(adminUser, data.Policy{
+			Name:   fmt.Sprintf("Policy name: %v", r),
+			Effect: policy.Allow,
+			Resources: []string{
+				fmt.Sprintf("Resource name: %v", r),
+			},
+			Actions: []string{
+				"Someaction",
+			},
+		})
+	}
+
+	start := time.Now() // Starting the stopwatch
+
+	//	ACT
 	overview, err := db.GetOverview(adminUser)
+
+	stop := time.Now()                                                           // Stopping the stopwatch
+	elapsed := stop.Sub(start)                                                   // Figuring out the time elapsed
+	t.Logf("GetOverview (%v items) elapsed time: %v\n", itemCountToAdd, elapsed) // Logging elapsed time
 
 	//	Assert
 	if err != nil {
 		t.Errorf("GetOverview - Should get overview without error, but got: %s", err)
 	}
 
-	if overview.GroupCount != 1 {
-		t.Errorf("GetOverview - Should get 1 group, but got: %+v", overview)
+	if overview.GroupCount != itemCountToAdd+1 {
+		t.Errorf("GetOverview - Should get %v group, but got: %+v", itemCountToAdd+1, overview)
 	}
 
 	if overview.UserCount != 1 {
 		t.Errorf("GetOverview - Should get 1 user, but got: %+v", overview)
 	}
 
-	if overview.RoleCount != 1 {
-		t.Errorf("GetOverview - Should get 1 role, but got: %+v", overview)
+	if overview.RoleCount != itemCountToAdd+1 {
+		t.Errorf("GetOverview - Should get %v role, but got: %+v", itemCountToAdd+1, overview)
 	}
 
-	if overview.PolicyCount != 1 {
-		t.Errorf("GetOverview - Should get 1 policy, but got: %+v", overview)
+	if overview.PolicyCount != itemCountToAdd+1 {
+		t.Errorf("GetOverview - Should get %v policy, but got: %+v", itemCountToAdd+1, overview)
 	}
 
 	if overview.ResourceCount != itemCountToAdd+1 {
