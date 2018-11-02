@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/danesparza/iamserver/api"
 	"github.com/danesparza/iamserver/data"
@@ -98,7 +99,7 @@ func start(cmd *cobra.Command, args []string) {
 		return
 	}
 	defer db.Close()
-	apiService := api.Service{DB: db}
+	apiService := api.Service{DB: db, StartTime: time.Now()}
 
 	//	Log the token TTL:
 	tokenttlstring := viper.GetString("apiservice.tokenttl")
@@ -130,6 +131,7 @@ func start(cmd *cobra.Command, args []string) {
 		UIRouter.PathPrefix("/ui").Handler(http.StripPrefix("/ui", http.FileServer(http.Dir(viper.GetString("uiservice.ui-dir")))))
 	}
 	UIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("GET") // Get a token (from credentials)
+	UIRouter.HandleFunc("/system/overview", apiService.GetOverview).Methods("GET")       // Get system overview
 
 	//	SERVICE ROUTES
 	//	-- Auth

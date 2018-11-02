@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/danesparza/iamserver/data"
 )
@@ -17,7 +18,8 @@ type SystemResponse struct {
 
 // Service encapsulates API service operations
 type Service struct {
-	DB *data.Manager
+	DB        *data.Manager
+	StartTime time.Time
 }
 
 // ErrorResponse represents an API response

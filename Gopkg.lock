@@ -96,6 +96,14 @@
   version = "v1.6.2"
 
 [[projects]]
+  digest = "1:09970bb8daf100bdf11b48b72c71ef980cd2b50efbd903989b3d182956be0b83"
+  name = "github.com/hako/durafmt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "7b7ae1e72eade09dbc9c2cfba3e6c4bae7b8bcac"
+  version = "1.0.0"
+
+[[projects]]
   digest = "1:8ec8d88c248041a6df5f6574b87bc00e7e0b493881dad2e7ef47b11dc69093b5"
   name = "github.com/hashicorp/golang-lru"
   packages = [
@@ -329,6 +337,7 @@
     "github.com/danesparza/otp",
     "github.com/danesparza/otp/totp",
     "github.com/gorilla/mux",
+    "github.com/hako/durafmt",
     "github.com/hashicorp/golang-lru",
     "github.com/hashicorp/logutils",
     "github.com/mitchellh/go-homedir",

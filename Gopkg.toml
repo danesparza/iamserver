@@ -80,3 +80,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/hako/durafmt"
+  version = "1.0.0"
