@@ -73,7 +73,6 @@ func initConfig() {
 	viper.SetDefault("loglevel", "INFO")
 	viper.SetDefault("apiservice.port", "3000")
 	viper.SetDefault("uiservice.port", "3001")
-	viper.SetDefault("apiservice.allowed-origins", "*")
 	viper.SetDefault("apiservice.tokenttl", "60")
 	viper.SetDefault("apiservice.tlscert", path.Join(home, "iamserver", "cert.pem"))
 	viper.SetDefault("apiservice.tlskey", path.Join(home, "iamserver", "key.pem"))

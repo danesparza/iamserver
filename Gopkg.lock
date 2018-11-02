@@ -190,14 +190,6 @@
   version = "v0.8.0"
 
 [[projects]]
-  digest = "1:0b8dd7447e420afff0260179dc892711e837edd1d446bc78dab924624a3c3c81"
-  name = "github.com/rs/cors"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "3fb1b69b103a84de38a19c3c6ec073dd6caa4d3f"
-  version = "v1.5.0"
-
-[[projects]]
   digest = "1:2e76a73cb51f42d63a2a1a85b3dc5731fd4faf6821b434bd0ef2c099186031d6"
   name = "github.com/rs/xid"
   packages = ["."]
@@ -342,7 +334,6 @@
     "github.com/hashicorp/logutils",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/errors",
-    "github.com/rs/cors",
     "github.com/rs/xid",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",

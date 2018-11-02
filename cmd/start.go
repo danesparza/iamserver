@@ -7,14 +7,12 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/danesparza/iamserver/api"
 	"github.com/danesparza/iamserver/data"
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -206,14 +204,6 @@ func start(cmd *cobra.Command, args []string) {
 	APIRouter.HandleFunc("/system/role/{rolename}/groups/{grouplist}", apiService.AttachRoleToGroups).Methods("PUT")      // Attach role to group(s)
 	APIRouter.HandleFunc("/system/role/{rolename}/users/{userlist}", apiService.AttachRoleToUsers).Methods("PUT")         // Attach role to user(s)
 
-	//	Setup the CORS options:
-	log.Printf("[INFO] Allowed CORS origins: %s\n", viper.GetString("apiservice.allowed-origins"))
-
-	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   strings.Split(viper.GetString("apiservice.allowed-origins"), ","),
-		AllowCredentials: true,
-	}).Handler(APIRouter)
-
 	//	Format the bound interface:
 	formattedAPIInterface := viper.GetString("apiservice.bind")
 	if formattedAPIInterface == "" {
@@ -237,7 +227,7 @@ func start(cmd *cobra.Command, args []string) {
 	//	Start the API and UI services
 	go func() {
 		log.Printf("[INFO] Starting API service: https://%s:%s\n", formattedAPIInterface, viper.GetString("apiservice.port"))
-		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("apiservice.bind")+":"+viper.GetString("apiservice.port"), viper.GetString("apiservice.tlscert"), viper.GetString("apiservice.tlskey"), corsHandler))
+		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("apiservice.bind")+":"+viper.GetString("apiservice.port"), viper.GetString("apiservice.tlscert"), viper.GetString("apiservice.tlskey"), APIRouter))
 	}()
 	go func() {
 		log.Printf("[INFO] Starting UI service: https://%s:%s\n", formattedUIInterface, viper.GetString("uiservice.port"))
