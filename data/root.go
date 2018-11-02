@@ -46,6 +46,15 @@ var (
 	sysreqGetPoliciesForUser   = &Request{"System", "GetPoliciesForUser"}
 )
 
+// SystemOverview represents the system overview data
+type SystemOverview struct {
+	UserCount     int
+	GroupCount    int
+	RoleCount     int
+	PolicyCount   int
+	ResourceCount int
+}
+
 // NewManager creates a new instance of a Manager and returns it
 func NewManager(systemdbpath, tokendbpath string) (*Manager, error) {
 	retval := new(Manager)
@@ -186,16 +195,167 @@ func (store Manager) SystemBootstrap() (User, string, error) {
 	return adminUser, adminPassword, nil
 }
 
+// GetOverview gets a system overview of counts in the system
+func (store Manager) GetOverview(context User) (SystemOverview, error) {
+	retval := SystemOverview{}
+
+	//	Group count
+	groupCount := 0
+	if store.IsUserRequestAuthorized(context, sysreqGetAllGroups) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator - but don't prefetch values (key-only search)
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("Group")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	Increment the group count
+				groupCount++
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem getting the count of groups: %s", err)
+		}
+	}
+
+	//	User count
+	userCount := 0
+	if store.IsUserRequestAuthorized(context, sysreqGetAllUsers) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator - but don't prefetch values (key-only search)
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("User")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	Increment the user count
+				userCount++
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem getting the count of users: %s", err)
+		}
+	}
+
+	//	Role count
+	roleCount := 0
+	if store.IsUserRequestAuthorized(context, sysreqGetAllRoles) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator - but don't prefetch values (key-only search)
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("Role")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	Increment the role count
+				roleCount++
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem getting the count of roles: %s", err)
+		}
+	}
+
+	//	Policy count
+	policyCount := 0
+	if store.IsUserRequestAuthorized(context, sysreqGetAllPolicies) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator - but don't prefetch values (key-only search)
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("Policy")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	Increment the policy count
+				policyCount++
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem getting the count of policies: %s", err)
+		}
+	}
+
+	//	Resource count
+	resourceCount := 0
+	if store.IsUserRequestAuthorized(context, sysreqGetAllResources) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator - but don't prefetch values (key-only search)
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("Resource")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	Increment the resource count
+				resourceCount++
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem getting the count of resources: %s", err)
+		}
+	}
+
+	//	Set counts:
+	retval = SystemOverview{
+		GroupCount:    groupCount,
+		UserCount:     userCount,
+		RoleCount:     roleCount,
+		PolicyCount:   policyCount,
+		ResourceCount: resourceCount,
+	}
+
+	//	Return our information:
+	return retval, nil
+}
+
 // GetKey returns a key to be used in the storage system
 func GetKey(entityType string, keyPart ...string) []byte {
 	allparts := []string{}
 	allparts = append(allparts, entityType)
 	allparts = append(allparts, keyPart...)
 	return []byte(strings.Join(allparts, "_"))
-}
-
-// IsUserAuthorized validates the request
-func (store Manager) IsUserAuthorized(user User, request Request) bool {
-
-	return true
 }

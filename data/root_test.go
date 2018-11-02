@@ -1,6 +1,7 @@
 package data_test
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"sort"
@@ -124,5 +125,110 @@ func TestRoot_Bootstrap_Successful(t *testing.T) {
 
 	t.Logf("New Admin user: %+v", adminUser)
 	t.Logf("New Admin user secret: %s", adminSecret)
+
+}
+
+func TestRoot_GetOverview_Successful(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Fatalf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	adminUser, _, err := db.SystemBootstrap()
+	if err != nil {
+		t.Errorf("SystemBootstrap - Should bootstrap without error, but got: %s", err)
+	}
+
+	//	Act
+	overview, err := db.GetOverview(adminUser)
+
+	//	Assert
+	if err != nil {
+		t.Errorf("GetOverview - Should get overview without error, but got: %s", err)
+	}
+
+	if overview.GroupCount != 1 {
+		t.Errorf("GetOverview - Should get 1 group, but got: %+v", overview)
+	}
+
+	if overview.UserCount != 1 {
+		t.Errorf("GetOverview - Should get 1 user, but got: %+v", overview)
+	}
+
+	if overview.RoleCount != 1 {
+		t.Errorf("GetOverview - Should get 1 role, but got: %+v", overview)
+	}
+
+	if overview.PolicyCount != 1 {
+		t.Errorf("GetOverview - Should get 1 policy, but got: %+v", overview)
+	}
+
+	if overview.ResourceCount != 1 {
+		t.Errorf("GetOverview - Should get 1 resource, but got: %+v", overview)
+	}
+
+}
+
+func TestRoot_GetOverview_HighCapacity_Successful(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Fatalf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	adminUser, _, err := db.SystemBootstrap()
+	if err != nil {
+		t.Errorf("SystemBootstrap - Should bootstrap without error, but got: %s", err)
+	}
+
+	itemCountToAdd := 100000
+
+	//	-- Add resources:
+	for r := 1; r <= itemCountToAdd; r++ {
+		db.AddResource(adminUser, fmt.Sprintf("Resource name: %v", r), fmt.Sprintf("Resource desc: %v", r))
+	}
+
+	//	Act
+	overview, err := db.GetOverview(adminUser)
+
+	//	Assert
+	if err != nil {
+		t.Errorf("GetOverview - Should get overview without error, but got: %s", err)
+	}
+
+	if overview.GroupCount != 1 {
+		t.Errorf("GetOverview - Should get 1 group, but got: %+v", overview)
+	}
+
+	if overview.UserCount != 1 {
+		t.Errorf("GetOverview - Should get 1 user, but got: %+v", overview)
+	}
+
+	if overview.RoleCount != 1 {
+		t.Errorf("GetOverview - Should get 1 role, but got: %+v", overview)
+	}
+
+	if overview.PolicyCount != 1 {
+		t.Errorf("GetOverview - Should get 1 policy, but got: %+v", overview)
+	}
+
+	if overview.ResourceCount != itemCountToAdd+1 {
+		t.Errorf("GetOverview - Should get %v resource, but got: %+v", itemCountToAdd+1, overview)
+	}
 
 }
