@@ -130,8 +130,41 @@ func start(cmd *cobra.Command, args []string) {
 		log.Printf("[INFO] Using UI directory: %s\n", viper.GetString("uiservice.ui-dir"))
 		UIRouter.PathPrefix("/ui").Handler(http.StripPrefix("/ui", http.FileServer(http.Dir(viper.GetString("uiservice.ui-dir")))))
 	}
+	//	-- Auth and overview
 	UIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("GET") // Get a token (from credentials)
 	UIRouter.HandleFunc("/system/overview", apiService.GetOverview).Methods("GET")       // Get system overview
+	//	-- 2FA enrollment
+	UIRouter.HandleFunc("/2fa", apiService.BeginTOTPEnrollment).Methods("POST")
+	UIRouter.HandleFunc("/2fa", apiService.FinishTOTPEnrollment).Methods("PUT")
+	UIRouter.HandleFunc("/2fa", apiService.GetTOTPEnrollmentImage).Methods("GET")
+	//	-- User
+	UIRouter.HandleFunc("/system/users", apiService.AddUser).Methods("POST")                              // Add a user
+	UIRouter.HandleFunc("/system/users", apiService.GetAllUsers).Methods("GET")                           // Get all users
+	UIRouter.HandleFunc("/system/user/{username}", apiService.GetUser).Methods("GET")                     // Get a user
+	UIRouter.HandleFunc("/system/user/{username}/policies", apiService.GetPoliciesForUser).Methods("GET") // Get policies for a user
+	//	-- Group
+	UIRouter.HandleFunc("/system/groups", apiService.AddGroup).Methods("POST")                                   // Add a group
+	UIRouter.HandleFunc("/system/groups", apiService.GetAllGroups).Methods("GET")                                // Get all groups
+	UIRouter.HandleFunc("/system/group/{groupname}", apiService.GetGroup).Methods("GET")                         // Get a group
+	UIRouter.HandleFunc("/system/group/{groupname}/users/{userlist}", apiService.AddUsersToGroup).Methods("PUT") // Add users to a group
+	//	-- Resource
+	UIRouter.HandleFunc("/system/resources", apiService.AddResource).Methods("POST")                                            // Add a resource
+	UIRouter.HandleFunc("/system/resources", apiService.GetAllResources).Methods("GET")                                         // Get all resources
+	UIRouter.HandleFunc("/system/resource/{resourcename}", apiService.GetResource).Methods("GET")                               // Get a resource
+	UIRouter.HandleFunc("/system/resource/{resourcename}/actions/{actionlist}", apiService.AddActionsToResource).Methods("PUT") // Add actions to a resource
+	//	-- Policy
+	UIRouter.HandleFunc("/system/policies", apiService.AddPolicy).Methods("POST")                                         // Add a policy
+	UIRouter.HandleFunc("/system/policies", apiService.GetAllPolicies).Methods("GET")                                     // Get all policies
+	UIRouter.HandleFunc("/system/policy/{policyname}", apiService.GetPolicy).Methods("GET")                               // Get a policy
+	UIRouter.HandleFunc("/system/policy/{policyname}/users/{userlist}", apiService.AttachPolicyToUsers).Methods("PUT")    // Attach policy to user(s)
+	UIRouter.HandleFunc("/system/policy/{policyname}/groups/{grouplist}", apiService.AttachPolicyToGroups).Methods("PUT") // Attach policy to group(s)
+	//	-- Role
+	UIRouter.HandleFunc("/system/roles", apiService.AddRole).Methods("POST")                                             // Add a role
+	UIRouter.HandleFunc("/system/roles", apiService.GetAllRoles).Methods("GET")                                          // Get all roles
+	UIRouter.HandleFunc("/system/role/{rolename}", apiService.GetRole).Methods("GET")                                    // Get a role
+	UIRouter.HandleFunc("/system/role/{rolename}/policies/{policylist}", apiService.AttachPoliciesToRole).Methods("PUT") // Attach role to policy(s)
+	UIRouter.HandleFunc("/system/role/{rolename}/groups/{grouplist}", apiService.AttachRoleToGroups).Methods("PUT")      // Attach role to group(s)
+	UIRouter.HandleFunc("/system/role/{rolename}/users/{userlist}", apiService.AttachRoleToUsers).Methods("PUT")         // Attach role to user(s)
 
 	//	SERVICE ROUTES
 	//	-- Auth
