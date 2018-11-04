@@ -50,7 +50,7 @@ func (service Service) GetTokenForCredentials(rw http.ResponseWriter, req *http.
 	//	Get the user from the credentials:
 	user, err := service.DB.GetUserWithCredentials(clientid, clientsecret)
 	if err != nil {
-		sendErrorResponse(rw, fmt.Errorf("HTTP basic auth credentials can't be retrieved"), http.StatusUnauthorized)
+		sendErrorResponse(rw, fmt.Errorf("HTTP basic auth credentials don't match a user"), http.StatusUnauthorized)
 		return
 	}
 
