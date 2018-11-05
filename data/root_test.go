@@ -59,7 +59,7 @@ func TestRoot_Databases_ShouldNotExistYet(t *testing.T) {
 func TestRoot_GetKey_ReturnsCorrectKey(t *testing.T) {
 	//	Arrange
 	userId := "unitestuser1"
-	expectedKey := "User_unitestuser1_name"
+	expectedKey := "User:unitestuser1:name"
 
 	//	Act
 	actualKey := data.GetKey("User", userId, "name")
@@ -234,9 +234,9 @@ func TestRoot_GetOverview_HighCapacity_Successful(t *testing.T) {
 	//	ACT
 	overview, err := db.GetOverview(adminUser)
 
-	stop := time.Now()                                                           // Stopping the stopwatch
-	elapsed := stop.Sub(start)                                                   // Figuring out the time elapsed
-	t.Logf("GetOverview (%v items) elapsed time: %v\n", itemCountToAdd, elapsed) // Logging elapsed time
+	stop := time.Now()                                                                     // Stopping the stopwatch
+	elapsed := stop.Sub(start)                                                             // Figuring out the time elapsed
+	t.Logf("GetOverview (%v items each type) elapsed time: %v\n", itemCountToAdd, elapsed) // Logging elapsed time
 
 	//	Assert
 	if err != nil {
@@ -261,6 +261,142 @@ func TestRoot_GetOverview_HighCapacity_Successful(t *testing.T) {
 
 	if overview.ResourceCount != itemCountToAdd+1 {
 		t.Errorf("GetOverview - Should get %v resource, but got: %+v", itemCountToAdd+1, overview)
+	}
+
+}
+
+func TestRoot_Search_Successful(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Fatalf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	adminUser, _, err := db.SystemBootstrap()
+	if err != nil {
+		t.Errorf("SystemBootstrap - Should bootstrap without error, but got: %s", err)
+	}
+
+	//	Act
+	results, err := db.Search(adminUser, "admin")
+
+	//	Assert
+	if err != nil {
+		t.Errorf("Search - Should search without error, but got: %s", err)
+	}
+
+	if len(results.Groups) != 1 {
+		t.Errorf("Search - Should get 1 group, but got: %+v", results.Groups)
+	}
+
+	if len(results.Users) != 1 {
+		t.Errorf("Search - Should get 1 user, but got: %+v", results.Users)
+	}
+
+	if len(results.Roles) != 1 {
+		t.Errorf("Search - Should get 1 role, but got: %+v", results.Roles)
+	}
+
+	if len(results.Policies) != 1 {
+		t.Errorf("Search - Should get 1 policy, but got: %+v", results.Policies)
+	}
+
+	if len(results.Resources) != 0 {
+		t.Errorf("Search - Should get 0 resources, but got: %+v", results.Resources)
+	}
+
+}
+
+func TestRoot_Search_HighCapacity_Successful(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Fatalf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	adminUser, _, err := db.SystemBootstrap()
+	if err != nil {
+		t.Errorf("SystemBootstrap - Should bootstrap without error, but got: %s", err)
+	}
+
+	itemCountToAdd := 10000
+	itemCountExpected := 3439
+
+	//	-- Add resources:
+	for r := 1; r <= itemCountToAdd; r++ {
+		db.AddResource(adminUser, fmt.Sprintf("UnitTestResource%v", r), fmt.Sprintf("Resource desc: %v", r))
+	}
+
+	//	-- Add groups:
+	for r := 1; r <= itemCountToAdd; r++ {
+		db.AddGroup(adminUser, fmt.Sprintf("UnitTestGroup%v", r), fmt.Sprintf("Group desc: %v", r))
+	}
+
+	//	-- Add roles:
+	for r := 1; r <= itemCountToAdd; r++ {
+		db.AddRole(adminUser, fmt.Sprintf("UnitTestRole%v", r), fmt.Sprintf("Role desc: %v", r))
+	}
+
+	//	-- Add policies:
+	for r := 1; r <= itemCountToAdd; r++ {
+		db.AddPolicy(adminUser, data.Policy{
+			Name:   fmt.Sprintf("UnitTestPolicy%v", r),
+			Effect: policy.Allow,
+			Resources: []string{
+				fmt.Sprintf("UnitTestResource%v", r),
+			},
+			Actions: []string{
+				"Someaction",
+			},
+		})
+	}
+
+	start := time.Now() // Starting the stopwatch
+
+	//	ACT
+	results, err := db.Search(adminUser, "unittest.*2")
+
+	stop := time.Now()                                                                // Stopping the stopwatch
+	elapsed := stop.Sub(start)                                                        // Figuring out the time elapsed
+	t.Logf("Search (%v items each type) elapsed time: %v\n", itemCountToAdd, elapsed) // Logging elapsed time
+
+	//	Assert
+	if err != nil {
+		t.Errorf("Search - Should get search results without error, but got: %s", err)
+	}
+
+	if len(results.Groups) != itemCountExpected {
+		t.Errorf("Search - Should get %v groups, but got: %+v", itemCountExpected, len(results.Groups))
+	}
+
+	if len(results.Users) != 0 {
+		t.Errorf("Search - Should get 1 user, but got: %+v", len(results.Users))
+	}
+
+	if len(results.Roles) != itemCountExpected {
+		t.Errorf("Search - Should get %v roles, but got: %+v", itemCountExpected, len(results.Roles))
+	}
+
+	if len(results.Policies) != itemCountExpected {
+		t.Errorf("Search - Should get %v policies, but got: %+v", itemCountExpected, len(results.Policies))
+	}
+
+	if len(results.Resources) != itemCountExpected {
+		t.Errorf("Search - Should get %v resources, but got: %+v", itemCountExpected, len(results.Resources))
 	}
 
 }

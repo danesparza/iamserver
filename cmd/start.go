@@ -131,6 +131,7 @@ func start(cmd *cobra.Command, args []string) {
 	//	-- Auth and overview
 	UIRouter.HandleFunc("/auth/token", apiService.GetTokenForCredentials).Methods("GET") // Get a token (from credentials)
 	UIRouter.HandleFunc("/system/overview", apiService.GetOverview).Methods("GET")       // Get system overview
+	UIRouter.HandleFunc("/system/search", apiService.Search).Methods("POST")             // Search the system
 	//	-- 2FA enrollment
 	UIRouter.HandleFunc("/2fa", apiService.BeginTOTPEnrollment).Methods("POST")
 	UIRouter.HandleFunc("/2fa", apiService.FinishTOTPEnrollment).Methods("PUT")

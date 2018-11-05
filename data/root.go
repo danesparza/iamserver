@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/danesparza/badger"
@@ -53,6 +54,15 @@ type SystemOverview struct {
 	RoleCount     int
 	PolicyCount   int
 	ResourceCount int
+}
+
+// SearchResults represents search results
+type SearchResults struct {
+	Users     []string
+	Groups    []string
+	Roles     []string
+	Policies  []string
+	Resources []string
 }
 
 // NewManager creates a new instance of a Manager and returns it
@@ -352,10 +362,191 @@ func (store Manager) GetOverview(context User) (SystemOverview, error) {
 	return retval, nil
 }
 
+// Search gets items that match the searchExpression
+func (store Manager) Search(context User, searchExpression string) (SearchResults, error) {
+	retval := SearchResults{}
+
+	//	Make sure the regexp is a case insensitive search:
+	searchExpression = "(?i)" + searchExpression
+
+	//	Compile the search expression:
+	r, err := regexp.Compile(searchExpression)
+	if err != nil {
+		return retval, fmt.Errorf("Problem with search expression: %s", err)
+	}
+
+	//	Groups found
+	groups := []string{}
+	if store.IsUserRequestAuthorized(context, sysreqGetAllGroups) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("Group")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	See if the search expression matches
+				currentItem := string(it.Item().Key())
+				if r.MatchString(currentItem) {
+					groups = append(groups, currentItem[len(prefix)+1:])
+				}
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem searching through groups: %s", err)
+		}
+	}
+
+	//	Users found
+	users := []string{}
+	if store.IsUserRequestAuthorized(context, sysreqGetAllUsers) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("User")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	See if the search expression matches
+				currentItem := string(it.Item().Key())
+				if r.MatchString(currentItem) {
+					users = append(users, currentItem[len(prefix)+1:])
+				}
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem searching through users: %s", err)
+		}
+	}
+
+	//	Roles found
+	roles := []string{}
+	if store.IsUserRequestAuthorized(context, sysreqGetAllRoles) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("Role")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	See if the search expression matches
+				currentItem := string(it.Item().Key())
+				if r.MatchString(currentItem) {
+					roles = append(roles, currentItem[len(prefix)+1:])
+				}
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem searching through roles: %s", err)
+		}
+	}
+
+	//	Policies found
+	policies := []string{}
+	if store.IsUserRequestAuthorized(context, sysreqGetAllPolicies) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("Policy")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	See if the search expression matches
+				currentItem := string(it.Item().Key())
+				if r.MatchString(currentItem) {
+					policies = append(policies, currentItem[len(prefix)+1:])
+				}
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem searching through policies: %s", err)
+		}
+	}
+
+	//	Resources found
+	resources := []string{}
+	if store.IsUserRequestAuthorized(context, sysreqGetAllResources) {
+		err := store.systemdb.View(func(txn *badger.Txn) error {
+
+			//	Get an iterator
+			opts := badger.DefaultIteratorOptions
+			opts.PrefetchValues = false
+			it := txn.NewIterator(opts)
+			defer it.Close()
+
+			//	Set our prefix
+			prefix := GetKey("Resource")
+
+			//	Iterate over our values:
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				//	See if the search expression matches
+				currentItem := string(it.Item().Key())
+				if r.MatchString(currentItem) {
+					resources = append(resources, currentItem[len(prefix)+1:])
+				}
+			}
+			return nil
+		})
+
+		//	If there was an error, report it:
+		if err != nil {
+			return retval, fmt.Errorf("Problem searching through resources: %s", err)
+		}
+	}
+
+	//	Set counts:
+	retval = SearchResults{
+		Groups:    groups,
+		Users:     users,
+		Roles:     roles,
+		Policies:  policies,
+		Resources: resources,
+	}
+
+	//	Return our information:
+	return retval, nil
+}
+
 // GetKey returns a key to be used in the storage system
 func GetKey(entityType string, keyPart ...string) []byte {
 	allparts := []string{}
 	allparts = append(allparts, entityType)
 	allparts = append(allparts, keyPart...)
-	return []byte(strings.Join(allparts, "_"))
+	return []byte(strings.Join(allparts, ":"))
 }
