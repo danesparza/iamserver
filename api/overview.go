@@ -51,7 +51,7 @@ func (service Service) GetOverview(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	formattedUptime := durafmt.Parse(time.Since(service.StartTime)).String()
+	formattedUptime := durafmt.ParseShort(time.Since(service.StartTime)).String()
 
 	//	Create our response and send information back:
 	response := SystemResponse{
