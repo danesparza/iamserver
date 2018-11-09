@@ -231,7 +231,7 @@ func start(cmd *cobra.Command, args []string) {
 		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("apiservice.bind")+":"+viper.GetString("apiservice.port"), viper.GetString("apiservice.tlscert"), viper.GetString("apiservice.tlskey"), APIRouter))
 	}()
 	go func() {
-		log.Printf("[INFO] Starting Admin UI: https://%s:%s/ui/\n", formattedUIInterface, viper.GetString("uiservice.port"))
+		log.Printf("[INFO] Starting Management UI: https://%s:%s/ui/\n", formattedUIInterface, viper.GetString("uiservice.port"))
 		log.Printf("[ERROR] %v\n", http.ListenAndServeTLS(viper.GetString("uiservice.bind")+":"+viper.GetString("uiservice.port"), viper.GetString("uiservice.tlscert"), viper.GetString("uiservice.tlskey"), UIRouter))
 	}()
 
