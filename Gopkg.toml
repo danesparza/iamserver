@@ -50,10 +50,6 @@
   version = "0.8.0"
 
 [[constraint]]
-  name = "github.com/rs/cors"
-  version = "1.5.0"
-
-[[constraint]]
   name = "github.com/rs/xid"
   version = "1.2.1"
 
