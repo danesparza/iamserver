@@ -43,6 +43,10 @@ func (store Manager) AddUser(context User, user User, userPassword string) (User
 		return retval, fmt.Errorf("User %s is not authorized to perform the action", context.Name)
 	}
 
+	//	Sanitize the user name and description:
+	user.Name = store.Input.Sanitize(user.Name)
+	user.Description = store.Input.Sanitize(user.Description)
+
 	//	First -- does the user exist already?
 	err := store.systemdb.View(func(txn *badger.Txn) error {
 		_, err := txn.Get(GetKey("User", user.Name))

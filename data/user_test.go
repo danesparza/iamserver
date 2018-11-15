@@ -83,6 +83,56 @@ func TestUser_AddUser_AlreadyExists_ReturnsError(t *testing.T) {
 
 }
 
+func TestUser_AddUser_XSSAttempt_SanitizesInput(t *testing.T) {
+
+	//	Arrange
+	systemdb, tokendb := getTestFiles()
+	db, err := data.NewManager(systemdb, tokendb)
+	if err != nil {
+		t.Fatalf("NewManager failed: %s", err)
+	}
+	defer func() {
+		db.Close()
+		os.RemoveAll(systemdb)
+		os.RemoveAll(tokendb)
+	}()
+
+	contextUser := data.User{Name: "System"}
+
+	var userName = string([]byte(`TestUser<img src=x onerror="alert('Pop-up window via stored XSS');"`))
+	testUser := data.User{Name: userName}
+	testPassword := "testpass"
+
+	//	Act
+	newUser, err := db.AddUser(contextUser, testUser, testPassword)
+
+	//	Assert
+	if err != nil {
+		t.Errorf("AddUser - Should add user without error, but got: %s", err)
+	}
+
+	if newUser.Name != "TestUser" {
+		t.Errorf("AddUser failed: Should have sanitized the username but got: %+v", newUser)
+	}
+
+	if newUser.Created.IsZero() || newUser.Updated.IsZero() {
+		t.Errorf("AddUser failed: Should have set an item with the correct datetime: %+v", newUser)
+	}
+
+	if newUser.CreatedBy != contextUser.Name {
+		t.Errorf("AddUser failed: Should have set an item with the correct 'created by' user: %+v", newUser)
+	}
+
+	if newUser.UpdatedBy != contextUser.Name {
+		t.Errorf("AddUser failed: Should have set an item with the correct 'updated by' user: %+v", newUser)
+	}
+
+	if newUser.SecretHash == "" || newUser.SecretHash == testPassword {
+		t.Errorf("AddUser failed: Should have set the hashed password correctly: %+v", newUser)
+	}
+
+}
+
 func TestUser_GetUser_UserDoesntExist_ReturnsError(t *testing.T) {
 
 	//	Arrange

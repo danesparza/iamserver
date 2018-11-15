@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/microcosm-cc/bluemonday"
+
 	"github.com/danesparza/badger"
 	"github.com/danesparza/iamserver/policy"
 	"github.com/rs/xid"
@@ -15,6 +17,7 @@ type Manager struct {
 	systemdb *badger.DB
 	tokendb  *badger.DB
 	Matcher  matcher
+	Input    *bluemonday.Policy
 }
 
 var (
@@ -68,6 +71,9 @@ type SearchResults struct {
 // NewManager creates a new instance of a Manager and returns it
 func NewManager(systemdbpath, tokendbpath string) (*Manager, error) {
 	retval := new(Manager)
+
+	//	Create the sanitizer policy
+	retval.Input = bluemonday.StrictPolicy()
 
 	//	Open the systemDB
 	sysopts := badger.DefaultOptions
