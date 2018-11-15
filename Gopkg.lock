@@ -158,6 +158,14 @@
   version = "v1.8.0"
 
 [[projects]]
+  digest = "1:1fc201f179a7d45f944655de3cdbfb0a8a226fd525569454e31ca87f9e4bb677"
+  name = "github.com/microcosm-cc/bluemonday"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "82c7118e8ccf7403d4860175d97bb635e8e28239"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:78bbb1ba5b7c3f2ed0ea1eab57bdd3859aec7e177811563edc41198a760b06af"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
@@ -269,10 +277,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a7b3aa11890fbe342ed4bf76a27986473d13103ae14796dcf2b55521c93e2547"
+  digest = "1:8aefd71c8511132b4f496fd28bd903d333b84906143375dfba785ba9d2a77cd8"
   name = "golang.org/x/net"
   packages = [
     "context",
+    "html",
+    "html/atom",
     "internal/timeseries",
     "trace",
   ]
@@ -332,6 +342,7 @@
     "github.com/hako/durafmt",
     "github.com/hashicorp/golang-lru",
     "github.com/hashicorp/logutils",
+    "github.com/microcosm-cc/bluemonday",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/errors",
     "github.com/rs/xid",
